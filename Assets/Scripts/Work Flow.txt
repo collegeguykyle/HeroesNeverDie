@@ -1,0 +1,90 @@
+
+-------------- STEPS TO MINIMUM VIABLE PRODUCT (MVP) ------------------
+
+** BATTLE **
+[ ] Unit Turn Order
+[ ] Battle Log save
+[ ] Win Loss Condition
+
+[ ] First ability pool of 8x abilities
+	[ ] Basic melee
+	[ ] Big Melee
+	[ ] Basic ranged
+	[ ] Big ranged - snipe
+	[ ] Basic magic
+	[ ] AOE magic
+	[ ] Basic block
+	[ ] Big block
+
+[ ] What system am I using for to hit and damage ?????
+
+[ ] Battle Steps
+	[/] Resolve: Start Combat Effects
+	[/] Start Unit Turn
+		[/] Resolve: Start Turn Effects
+	[/] Roll Dice
+		[/] Resolve: On Dice Rolled Effects (type of mana rolled, doubles, etc)
+		[/] Resolve: Rolled Dice results (gain mana, other die face effects) 
+	[/] Determine Ability to use
+		[/] By unit's ability priority: test for required mana
+		[/] If have mana, test if targets available
+		[/] If targets available, select based on priority (default adjacent) 
+			[ ] if no abilities have targets, then move / pass
+		[ ] Broadcast ability start and target
+			[/] Resolve: On targeting effects / reactions
+		[/] Resolve: Ability
+			[/] Resolve: does it hit
+			[/] Resolve: Do the damage
+			[/] Resolve: Apply additional effects
+		[/] Resoleve On Ability Effects (on hit, crit, miss, dodge, type of damage, etc)
+		[/] Resolve Post Ability Effects / reactions
+	[/] Repeat based on additional available actions and mana
+	[/] End Unit Turn
+		[/] Resolve End of Turn effects
+		[/] Reset mana
+
+
+
+**** SHOP TO BATTLE LOOP ****
+[ ] Battle win/lose returns to new shop
+[ ] End of shop starts battle
+
+
+** SHOP **
+[ ] All players equip / inventory screen
+
+
+
+** ON-LINE **
+[ ] Battle Log Load
+[ ] Battle replay
+
+** DESIGN TIME **
+[ ] Items x 50
+[ ] Abilities x 10
+[ ] Classes x5
+
+-------------- ADDITIONAL FEATURES AFTER MVP ----------------------
+
+** BATTLE **
+[ ] Dice Effects
+	[ ] Pain - Take damage when rolled, remove effect
+	[ ] Agony - Take damage when rolled, effect remains
+	[ ] Phased - No mana when rolled, remove effect
+[ ] Camera effects to emphasize unit actions
+[ ] Moving around the battle field
+	[ ] Flanking, secret side lanes for certain characters
+
+[ ] Status Effects
+	[ ] Poison
+	[ ] Retain - Keep X amount of unspent mana of Y type until next turn
+
+** SHOP **
+[ ] Shop and single player screen w/ small team summary window
+[ ] Class unique passive abilities (or starting relics?)
+[ ] Class skill trees (exp purchased or equipment stat?)
+
+** OTHER **
+[ ] Branching path with additional events between shop and battle
+
+

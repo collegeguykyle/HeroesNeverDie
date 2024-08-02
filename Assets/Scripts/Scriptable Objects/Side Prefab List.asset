@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5ce68375c1155e488fdda5ce1c0c253, type: 3}
+  m_Name: Side Prefab List
+  m_EditorClassIdentifier: 
+  list:
+  - {fileID: 5645941462844691099, guid: b0b2256e6e44fd648ab411fa279190ba, type: 3}
+  - {fileID: 8849931054136004500, guid: fea99d589371d7a4892f39e6b806510b, type: 3}
+  - {fileID: 7267611714641208122, guid: b6f79b1056c16ce499039c5728221d13, type: 3}
+  - {fileID: 5004498994347355647, guid: 626c3c9a99996bb4fa10004796f5b161, type: 3}
+  - {fileID: 736049178622808099, guid: 6c3794052655e534aaf0d37b30f372a7, type: 3}
+  - {fileID: 3143868146041944724, guid: d2070c7748413d143aa87e7ae857ca37, type: 3}
+  - {fileID: 1556247224850095806, guid: 4438cd0928ac84a4cb77b266f9a54867, type: 3}
+  - {fileID: 2219213093059784995, guid: 14a1f19d00e44b34daa77705dad1ea4a, type: 3}
