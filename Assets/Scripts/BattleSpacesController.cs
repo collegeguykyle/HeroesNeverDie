@@ -6,14 +6,13 @@ using UnityEngine.Rendering;
 public class BattleSpacesController
 {
 
-    private BattleSpace[,] battleSpaces = new BattleSpace[3,3];
-
+    private BattleSpace[,] battleSpaces = new BattleSpace[9,3];  //[row, col]
     public BattleSpacesController()
-        {
-            CreateBattleSpaces();
-        }
+    {
+        CreateBattleSpaces();
+    }
 
-    public bool OccupySpace(IOccupyBattleSpace entity, BattleSpace space)
+    public bool TryOccupySpace(IOccupyBattleSpace entity, BattleSpace space)
     {
         if (IsSpaceOccupied(space.row, space.col))
         {
@@ -26,6 +25,37 @@ public class BattleSpacesController
             return true;
         }
     }
+    public bool TryOccupySpace(IOccupyBattleSpace entity, int row, int col)
+    {
+        return TryOccupySpace(entity, GetBattleSpaceAt(row, col));
+    }
+
+    public void PlaceEnemyTeam(List<Unit> enemyTeam)
+    {
+        //the enemy team needs to be rotated around and then placed in the top 3 rows
+        foreach (Unit unit in enemyTeam)
+        {
+            if (unit.StartingCol == 1) unit.StartingCol = 3;
+            else if (unit.StartingCol == 3) unit.StartingCol = 1;
+            if (unit.StartingRow == 1) unit.StartingRow = 3;
+            else if (unit.StartingRow == 3) unit.StartingRow = 1;
+
+            TryOccupySpace(unit, unit.StartingRow, unit.StartingCol);
+        }
+    }
+
+    public void PlacePlayerTeam(List<Unit> playerTeam)
+    {
+        foreach(Unit unit in playerTeam)
+        {
+            if (unit.StartingRow == 1) unit.StartingRow = 7;
+            else if (unit.StartingRow == 2) unit.StartingRow = 8;
+            else if (unit.StartingRow == 3) unit.StartingRow = 9;
+
+            TryOccupySpace(unit, unit.StartingRow, unit.StartingCol);
+        }
+
+    }
 
     public void FindFreeSpace(IOccupyBattleSpace entity)
     {
@@ -34,21 +64,29 @@ public class BattleSpacesController
 
     public bool IsSpaceOccupied(int Row, int Col)
     {
-        if (battleSpaces[Row, Col].isInSpace == null) return false;
+        if (battleSpaces[Row-1, Col-1].isInSpace == null) return false;
         else return true;
     }
 
     public IOccupyBattleSpace WhoOccupiesSpace(int Row, int Col)
     {
-        if (battleSpaces[Row, Col].isInSpace == null) return null;
-        else return battleSpaces[Row, Col].isInSpace;
+        if (battleSpaces[Row-1, Col-1].isInSpace == null) return null;
+        else return battleSpaces[Row-1, Col-1].isInSpace;
+    }
+    public BattleSpace GetBattleSpaceAt(int Row, int Col)
+    {
+        if (battleSpaces[Row - 1, Col - 1] == null) return null;
+        else return battleSpaces[Row - 1, Col - 1];
     }
 
     private void CreateBattleSpaces()
     {
-        for (int i = 1; i < 4; i++)
+        int rows = battleSpaces.GetLength(0);
+        int cols = battleSpaces.GetLength(1);
+
+        for (int i = 0; i < rows; i++)
         {
-            for(int j = 1; j < 4; j++)
+            for(int j = 0; j < cols; j++)
             {
                 battleSpaces[i,j] = new BattleSpace(i,j);
             }
@@ -64,8 +102,8 @@ public class BattleSpace
 
     public int row;
     public int col; // 1,1  1,2  1,3 
-             // 2,1  2,2  2,3
-             // 3,1  3,2  3,3
+                    // 2,1  2,2  2,3
+                    // 3,1  3,2  3,3
 
     public IOccupyBattleSpace isInSpace;
 

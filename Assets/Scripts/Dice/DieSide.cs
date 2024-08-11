@@ -10,9 +10,9 @@ public class DieSide
     // [ ] Should we have unique sprites for dice sides, or create a modular system??
 
     //Dice Status Effects
-    bool pain = false; //When rolled take damage and remove this effect !!NOT IMPLIMENTED
-    bool agony = false; //When rolled take damage but effect is not removed !!NOT IMPLIMENTED
-    bool phased = false; //When rolled side does nothing but this effect is removed !!NOT IMPLIMENTED
+    // bool pain = false; //When rolled take damage and remove this effect !!NOT IMPLIMENTED
+    // bool agony = false; //When rolled take damage but effect is not removed !!NOT IMPLIMENTED
+    // bool phased = false; //When rolled side does nothing but this effect is removed !!NOT IMPLIMENTED
 
     #region Constructors
 

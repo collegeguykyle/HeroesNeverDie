@@ -12,9 +12,9 @@ public class DieSideMonoB : MonoBehaviour
     public Mana Mana  = new Mana(); //Amount of mana you get if the side is rolled
 
     //Dice Status Effects
-    [SerializeField] bool pain = false; //When rolled take damage and remove this effect !!NOT IMPLIMENTED
-    [SerializeField] bool agony = false; //When rolled take damage but effect is not removed !!NOT IMPLIMENTED
-    [SerializeField] bool phased = false; //When rolled side does nothing but this effect is removed !!NOT IMPLIMENTED
+    // [SerializeField] bool pain = false; //When rolled take damage and remove this effect !!NOT IMPLIMENTED
+    // [SerializeField] bool agony = false; //When rolled take damage but effect is not removed !!NOT IMPLIMENTED
+    // [SerializeField] bool phased = false; //When rolled side does nothing but this effect is removed !!NOT IMPLIMENTED
 
     private void Start()
     {

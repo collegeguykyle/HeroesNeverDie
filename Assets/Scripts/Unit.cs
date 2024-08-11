@@ -20,7 +20,8 @@ public class Unit : MonoBehaviour, IOccupyBattleSpace
 
     public List<Ability> Abilities = new List<Ability>();
 
-    public BattleSpace position = new BattleSpace(0,0);
+    public int StartingRow = 0;
+    public int StartingCol = 0;
 
     public Team Team { get; private set; }
 }

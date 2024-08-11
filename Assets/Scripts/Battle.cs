@@ -10,6 +10,7 @@ public class Battle
     private List<Unit> EnemyTeam;
     private BattleSpacesController SpaceController = new BattleSpacesController();
     private BattleLog BattleLog = new BattleLog();
+    private Reactions Reactions = new Reactions();
     private Unit CurrentUnit;
     private bool BattleOver = false;
     private Queue<Unit> TurnOrder = new Queue<Unit>();
@@ -26,8 +27,7 @@ public class Battle
     {
         SetUnitStartingPositions();
         SetTurnOrder();
-        UpdateReactions();
-        GetReactionsType(BattleReaction.StartOfCombat);
+        Reactions.OnStartCombat?.Invoke();
         StartRound();
     }
     
@@ -44,10 +44,10 @@ public class Battle
 
     private void StartUnitTurn(Unit unit)
     {
-        GetReactionsType(BattleReaction.StartOfTurn);
+        Reactions.OnStartOfTurn?.Invoke(unit);
         RollDice(unit);
-        GetReactionsType(BattleReaction.DiceRoll);
-        GetReactionsType(BattleReaction.RollResult);
+        Reactions.onDiceRoll?.Invoke(unit);
+        Reactions.onRollResult?.Invoke(unit);
         while (unit.PassTurn == false)
         {
             Ability ability = ChooseAbility(unit);
@@ -58,44 +58,20 @@ public class Battle
 
     private void EndBattle()
     {
-        GetReactionsType(BattleReaction.EndOfBattle);
+        Reactions.onEndOfBattle?.Invoke();
         //push the log somewhere via an event broadcast
     }
 
-    private void SetUnitStartingPositions() //[ ] !!IMPORTANT FIX: Currently grid is 3x3 and both teams try to exist in it
+    private void SetUnitStartingPositions()
     {
-        foreach (Unit unit in EnemyTeam)
-        {
-            if (!SpaceController.OccupySpace(unit, unit.position))
-            {
-                SpaceController.FindFreeSpace(unit);
-            }
-        }
-        foreach (Unit unit in PlayerTeam)
-        {
-            if (!SpaceController.OccupySpace(unit, unit.position))
-            {
-                SpaceController.FindFreeSpace(unit);
-            }
-        }
-    }
+        SpaceController.PlaceEnemyTeam(EnemyTeam);
+        SpaceController.PlacePlayerTeam(PlayerTeam);
+    }        
 
     private void SetTurnOrder() 
     { 
     
-    }
-
-    private void UpdateReactions()
-    {
-
-    }
-    
-    private void GetReactionsType(BattleReaction ReactionType)
-    {
-
-    }
-
-    
+    }  
 
     private Unit GetNextUnitTurn()
     {
@@ -109,37 +85,27 @@ public class Battle
 
     }
 
-    private Ability ChooseAbility(Unit unit)
+    private Ability ChooseAbility(Unit unit) //add that this returns an ability
     {
-
+        Melee1 a = new Melee1(unit);
+        return a;
     }
 
-    private void UseAbility(Unit unit, Ability ability)
+    private void UseAbility(Unit target, Ability ability)
     {
-        GetReactionsType(BattleReaction.TargetingReaction);
+        Reactions.onTargeting?.Invoke(CurrentUnit, target, ability);
         //to hit roll, do damage, apply additional ability effects
-        GetReactionsType(BattleReaction.HitResult);
-        GetReactionsType(BattleReaction.AbilityComplete);
+        Reactions.onHitResult?.Invoke();
+        Reactions.onAbilityComplete?.Invoke();
     }
 
     private void EndUnitTurn(Unit unit)
     {
-        GetReactionsType(BattleReaction.EndOfTurn);
+        Reactions.onEndOfTurn?.Invoke(unit);
         //reset mana
     }
 }
 
-public enum BattleReaction { StartOfCombat, StartOfTurn, DiceRoll, RollResult, TargetingReaction, HitResult, AbilityComplete, EndOfTurn, EndOfBattle, UnitDeath }
-public interface IBattleReaction
-{
-    public BattleReaction Reaction { get; set; }
-    public Unit Owner { get; set; }
-    public void OnReaction();
-    public bool TestReaction(BattleReaction reaction)
-    {
-        if (reaction == Reaction) return true;
-        else return false;
-    }
-}
+
 
 
