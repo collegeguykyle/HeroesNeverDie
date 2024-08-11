@@ -22,6 +22,7 @@ public class Unit : MonoBehaviour, IOccupyBattleSpace
 
     public int StartingRow = 0;
     public int StartingCol = 0;
+    public int Init = 0;
 
     public Team Team { get; private set; }
 }

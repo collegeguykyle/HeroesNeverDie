@@ -9,35 +9,41 @@ public class Battle
     private List<Unit> PlayerTeam;
     private List<Unit> EnemyTeam;
     private BattleSpacesController SpaceController = new BattleSpacesController();
+    private TurnOrder TurnOrder;
     private BattleLog BattleLog = new BattleLog();
     private Reactions Reactions = new Reactions();
     private Unit CurrentUnit;
     private bool BattleOver = false;
-    private Queue<Unit> TurnOrder = new Queue<Unit>();
 
 
     public Battle(List<Unit> playerTeam, List<Unit> enemyTeam)
     {
         PlayerTeam = playerTeam;
         EnemyTeam = enemyTeam;
+
         StartBattle();
     }
 
     public void StartBattle()
     {
         SetUnitStartingPositions();
-        SetTurnOrder();
-        Reactions.OnStartCombat?.Invoke();
-        StartRound();
+        TurnOrder = new TurnOrder(PlayerTeam, EnemyTeam);
+        // [ ] Call start of battle function on all units, this will do their start of combat stuff
+        //     and hook up all relevant stuff to their events as needed for future reactions
+        BattleLoop();
     }
-    
-    private void StartRound()
+    private void SetUnitStartingPositions()
+    {
+        SpaceController.PlaceEnemyTeam(EnemyTeam);
+        SpaceController.PlacePlayerTeam(PlayerTeam);
+    }
+
+    private void BattleLoop()
     {
         while (BattleOver == false)
         {
-            Unit next = GetNextUnitTurn();
+            Unit next = TurnOrder.GetCurrentUnit();
             StartUnitTurn(next);
-            //[ ] Add rounds or just loop initiative?
         }
         EndBattle();
     }
@@ -56,29 +62,13 @@ public class Battle
         EndUnitTurn(unit);
     }
 
-    private void EndBattle()
+    private void EndUnitTurn(Unit unit)
     {
-        Reactions.onEndOfBattle?.Invoke();
-        //push the log somewhere via an event broadcast
+        Reactions.onEndOfTurn?.Invoke(unit);
+        // [ ] reset mana
+        TurnOrder.AdvanceToNextUnit();
     }
 
-    private void SetUnitStartingPositions()
-    {
-        SpaceController.PlaceEnemyTeam(EnemyTeam);
-        SpaceController.PlacePlayerTeam(PlayerTeam);
-    }        
-
-    private void SetTurnOrder() 
-    { 
-    
-    }  
-
-    private Unit GetNextUnitTurn()
-    {
-        return CurrentUnit;
-    }
-
-    
 
     private void RollDice(Unit unit)
     {
@@ -98,12 +88,12 @@ public class Battle
         Reactions.onHitResult?.Invoke();
         Reactions.onAbilityComplete?.Invoke();
     }
-
-    private void EndUnitTurn(Unit unit)
+    private void EndBattle()
     {
-        Reactions.onEndOfTurn?.Invoke(unit);
-        //reset mana
+        Reactions.onEndOfBattle?.Invoke();
+        //push the log somewhere via an event broadcast
     }
+
 }
 
 
