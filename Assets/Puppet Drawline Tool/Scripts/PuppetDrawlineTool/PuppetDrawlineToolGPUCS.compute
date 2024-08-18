@@ -1,0 +1,330 @@
+//
+// ---------------------------------------------------------------------------------
+//         SpRiseM.Chen --- Puppet Drawline ComputeShader. --- 7.16.2024 
+// Including some LDLT Decomposition / Matrix Multiply functions using ComputeShader
+// ---------------------------------------------------------------------------------
+//
+// Each #kernel tells which function to compile; you can have many kernels
+
+#pragma kernel Matrix_Multiply
+#pragma kernel Matrix_TransposeMultiply
+
+#pragma kernel Matrix_GaussianElimination_CalEachRowDiv
+#pragma kernel Matrix_GaussianElimination_Elimination
+#pragma kernel Matrix_UpperTriangleMatrix_Solver
+#pragma kernel Matrix_LowerTriangleMatrix_Solver
+
+
+#pragma kernel Matrix_LDLT_CalDii
+#pragma kernel Matrix_LDLT
+#pragma kernel Matrix_LDLT_ClearLUpperTriValue
+#pragma kernel Matrix_LDLT_MergeLDandLT
+#pragma kernel Matrix_LDLT_ResetDiag
+
+#pragma kernel Matrix_LDLT_UpperTriangle_Solver
+#pragma kernel Matrix_LDLT_LowerTriangle_Solver
+
+
+// Matrix M1, M2, and M3 = M1 * M2
+StructuredBuffer<float> M1, M2;
+RWStructuredBuffer<float> M3;
+
+// the rows & columns of matrix M1, M2 and M3
+int M1row, M1col, M2row, M2col, M3row, M3col;
+
+
+// Matrix multiply: M1 * M2 = M3
+[numthreads(16,16,1)]
+void Matrix_Multiply (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    int J = id.x;
+    int I = id.y;
+
+    if (I >= M3row || J >= M3col) return;
+
+    float sum = 0;
+    for (int k = 0; k < M1col; k++)
+    {
+        sum += M1[I * M1col + k] * M2[k * M2col + J];
+    }
+
+    M3[I * M3col + J] = sum;
+}
+
+
+// Matrix Transpose multiply: M1^T * M2 = M3
+[numthreads(16,16,1)]
+void Matrix_TransposeMultiply (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    int J = id.x;
+    int I = id.y;
+
+    if (I >= M3row || J >= M3col) return;
+
+    float sum = 0;
+    for (int k = 0; k < M1row; k++)
+    {
+        sum += M1[k * M1col + I] * M2[k * M2col + J];
+    }
+
+    M3[I * M3col + J] = sum;
+}
+
+
+//-------------------------------------------------------------
+
+// Matrix A, b, x, and temp vector to store division value.
+RWStructuredBuffer<float> A, b, X, divTmp;
+
+// the rows & columns of Matrix A, b and x.
+int Arow, Acol, brow, bcol, divSize, xrow, xcol;
+
+// the current operating row of matrix A
+int currentOperatingRow;
+
+// Gaussian Elimination: to calculate how much should each row's value to divide.
+[numthreads(1,16,1)]
+void Matrix_GaussianElimination_CalEachRowDiv (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    int y = id.y;
+
+    if (y >= Arow) return;
+    if (y <= currentOperatingRow) return;
+    
+    float div;
+    // Do not divide Zero!
+    if(A[currentOperatingRow * Acol + currentOperatingRow] != 0)
+        div = A[y * Acol + currentOperatingRow] / (A[currentOperatingRow * Acol + currentOperatingRow] + 0.000000001);
+    else
+        div = 0;
+
+    divTmp[y] = div;
+}
+
+
+// Gaussian Elimination: to eliminate each row's first non-zero value, in order to get a up-triangle matrix.
+[numthreads(16,16,1)]
+void Matrix_GaussianElimination_Elimination (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    int v = id.x;
+    int y = id.y;
+
+    if (y >= Arow || v >= Acol) return;
+    if (y <= currentOperatingRow) return;
+
+    A[y * Acol + v] -= divTmp[y] * A[currentOperatingRow * Acol + v];
+
+    b[y] -= divTmp[y] * b[currentOperatingRow];
+
+}
+
+
+// To solve Equation A*x=b, where A is an Upper Triangle Matirx.
+[numthreads(1,16,1)]
+void Matrix_UpperTriangleMatrix_Solver (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    int y = id.y;
+
+    if (y >= Arow) return;
+    if (y > currentOperatingRow) return;
+
+    if (y == currentOperatingRow)
+    {
+        X[currentOperatingRow] = b[currentOperatingRow] / (0.000000001 + A[currentOperatingRow * Acol + currentOperatingRow]);
+        return;
+    }
+
+    float v = b[currentOperatingRow] / (0.000000001 + A[currentOperatingRow * Acol + currentOperatingRow]);
+    b[y] -= A[y * Acol + currentOperatingRow] * v;
+
+}
+
+
+// To solve Equation A*x=b, where A is an Lower Triangle Matirx.
+[numthreads(1,16,1)]
+void Matrix_LowerTriangleMatrix_Solver (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    int y = id.y;
+
+    if (y >= Arow) return;
+    if (y < currentOperatingRow) return;
+
+    if (y == currentOperatingRow)
+    {
+        X[currentOperatingRow] = b[currentOperatingRow] / (0.000000001 + A[currentOperatingRow * Acol + currentOperatingRow]);
+        return;
+    }
+
+    float v = b[currentOperatingRow] / (0.000000001 + A[currentOperatingRow * Acol + currentOperatingRow]);
+    b[y] -= A[y * Acol + currentOperatingRow] * v;
+
+}
+
+
+//-------------------------------------------------
+
+// Square Matrix L.
+RWStructuredBuffer<float> L;
+
+// Diagonal Matirx D, use Vector to save memory.
+RWStructuredBuffer<float> D;
+
+// the B part of equation "ATA*x = L*D*LT*x = B".
+RWStructuredBuffer<float> B;
+
+// the length of square matrix L
+int Llen;
+
+// the current operating column of matrix L
+int LDLTcurrentCol;
+
+// whether to calculate current column or not.
+bool CalculateCurCol;
+
+
+// Calculate the value at position D[i][i].
+[numthreads(1,1,1)]
+void Matrix_LDLT_CalDii (uint3 id : SV_DispatchThreadID)
+{
+    D[LDLTcurrentCol] = L[Llen * LDLTcurrentCol + LDLTcurrentCol] - D[LDLTcurrentCol];
+    L[Llen * LDLTcurrentCol + LDLTcurrentCol] = 1;
+}
+
+
+// Basic LDLT solver, use matrix L and diagonal matrix D to solve.
+[numthreads(16,16,1)]
+void Matrix_LDLT (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    int J = id.x;
+    int I = id.y;
+
+    // Out of Bounds.
+    if (I >= Llen || J >= Llen) return;
+
+    int Iupper = Llen - 1 - I;
+    int Jupper = Llen - 1 - J;
+
+    if(CalculateCurCol)
+    {
+        // Calculate current column's Lij value.
+        if(I > J && J == LDLTcurrentCol)
+        {
+            L[Llen * I + J] -= L[Llen * Iupper + Jupper];
+            L[Llen * I + J] /= (0.000000001 + D[J]);
+
+            // Update Dii value after LDLTcurrentCol.
+            D[I] += L[Llen * I + LDLTcurrentCol] * L[Llen * I + LDLTcurrentCol] * D[LDLTcurrentCol];
+        }
+    }
+    else
+    {
+        // Memorized: update preSub value.
+        if(J > LDLTcurrentCol && I > J)
+        {
+            L[Llen * Iupper + Jupper] += L[Llen * I + LDLTcurrentCol] * L[Llen * J + LDLTcurrentCol] * D[LDLTcurrentCol];
+        }
+    }
+
+}
+
+
+// Clear the value of the Upper triangle matrix L, to 0.
+[numthreads(16,16,1)]
+void Matrix_LDLT_ClearLUpperTriValue (uint3 id : SV_DispatchThreadID)
+{
+    int J = id.x;
+    int I = id.y;
+
+    if(I >= Llen || J >= Llen) return;
+
+    if(J > I)
+    {
+        L[Llen * I + J] = 0;
+    }
+
+}
+
+
+// Reset the diagonal positions of matrix L to value 1.
+[numthreads(1,16,1)]
+void Matrix_LDLT_ResetDiag (uint3 id : SV_DispatchThreadID)
+{
+    int I = id.y;
+
+    if(I >= Llen) return;
+
+    L[Llen * I + I] = 1;
+
+}
+
+
+// Merge the "L*D" part of the equation "L*D*LT", to caluculate the answer through only one matrix.
+[numthreads(16,16,1)]
+void Matrix_LDLT_MergeLDandLT(uint3 id : SV_DispatchThreadID)
+{
+    int J = id.x;
+    int I = id.y;
+
+    if(I >= Llen || J >= Llen) return;
+
+    if(J < I)
+    {
+        L[Llen * J + I] = L[Llen * I + J];
+        L[Llen * I + J] *= D[J];
+    }
+    else if(J == I)
+    {
+        L[Llen * I + J] *= D[J];
+    }
+}
+
+
+// To solve Equation A*x=b, where A is an Upper Triangle Matirx.
+[numthreads(1,16,1)]
+void Matrix_LDLT_UpperTriangle_Solver (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    int I = id.y;
+
+    if (I >= Llen || I > currentOperatingRow) return;
+    
+    float val = D[currentOperatingRow] / (0.000000001 + L[Llen * currentOperatingRow + currentOperatingRow]);
+
+    if (I == currentOperatingRow)
+    {
+        B[I] = val;
+        return;
+    }
+
+    D[I] -= L[Llen * I + currentOperatingRow] * val;
+
+}
+
+
+// To solve Equation A*x=b, where A is an Lower Triangle Matirx.
+[numthreads(1,16,1)]
+void Matrix_LDLT_LowerTriangle_Solver (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    int I = id.y;
+
+    if (I >= Llen || I < currentOperatingRow) return;
+    
+    float val = B[currentOperatingRow] / (0.000000001 + L[Llen * currentOperatingRow + currentOperatingRow]);
+
+    if (I == currentOperatingRow)
+    {
+        D[I] = val;
+        return;
+    }
+
+    B[I] -= L[Llen * I + currentOperatingRow] * val;
+
+}

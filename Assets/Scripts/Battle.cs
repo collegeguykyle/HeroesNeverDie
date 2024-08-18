@@ -21,77 +21,66 @@ public class Battle
         PlayerTeam = playerTeam;
         EnemyTeam = enemyTeam;
 
-        StartBattle();
-    }
-
-    public void StartBattle()
-    {
-        SetUnitStartingPositions();
-        TurnOrder = new TurnOrder(PlayerTeam, EnemyTeam);
-        // [ ] Call start of battle function on all units, this will do their start of combat stuff
-        //     and hook up all relevant stuff to their events as needed for future reactions
-        BattleLoop();
-    }
-    private void SetUnitStartingPositions()
-    {
         SpaceController.PlaceEnemyTeam(EnemyTeam);
         SpaceController.PlacePlayerTeam(PlayerTeam);
+        
+        foreach (Unit unit in playerTeam) {unit.BattleStart(this); }
+        foreach (Unit unit in enemyTeam) { unit.BattleStart(this); }
+
+        TurnOrder = new TurnOrder(PlayerTeam, EnemyTeam);
+
+        BattleLoop();
     }
 
     private void BattleLoop()
     {
         while (BattleOver == false)
         {
-            Unit next = TurnOrder.GetCurrentUnit();
-            StartUnitTurn(next);
+            CurrentUnit = TurnOrder.GetCurrentUnit();  //Turn Order advances to next unit in End Unit Turn step
+            CurrentUnit.TakeTurn();
         }
-        EndBattle();
-    }
-
-    private void StartUnitTurn(Unit unit)
-    {
-        Reactions.OnStartOfTurn?.Invoke(unit);
-        RollDice(unit);
-        Reactions.onDiceRoll?.Invoke(unit);
-        Reactions.onRollResult?.Invoke(unit);
-        while (unit.PassTurn == false)
-        {
-            Ability ability = ChooseAbility(unit);
-            UseAbility(unit, ability);
-        }
-        EndUnitTurn(unit);
-    }
-
-    private void EndUnitTurn(Unit unit)
-    {
-        Reactions.onEndOfTurn?.Invoke(unit);
-        // [ ] reset mana
-        TurnOrder.AdvanceToNextUnit();
+        SendEndBattle();
     }
 
 
-    private void RollDice(Unit unit)
-    {
 
-    }
-
-    private Ability ChooseAbility(Unit unit) //add that this returns an ability
+    private void SendUseAbility(Unit target, Ability ability)
     {
-        Melee1 a = new Melee1(unit);
-        return a;
-    }
-
-    private void UseAbility(Unit target, Ability ability)
-    {
-        Reactions.onTargeting?.Invoke(CurrentUnit, target, ability);
+        Reactions.onTargeting?.Invoke();
         //to hit roll, do damage, apply additional ability effects
         Reactions.onHitResult?.Invoke();
         Reactions.onAbilityComplete?.Invoke();
+    } 
+    
+    public void SendEndUnitTurn(Unit unit)
+    {
+        Reactions.onEndOfTurn?.Invoke();
+        TurnOrder.AdvanceToNextUnit();
     }
-    private void EndBattle()
+    
+    private void SendEndBattle()
     {
         Reactions.onEndOfBattle?.Invoke();
-        //push the log somewhere via an event broadcast
+        //[ ] push the log somewhere via an event broadcast
+    }
+
+    
+    public void SendStartUnitTurn(Unit unit)
+    {
+
+        Reactions.onStartOfTurn?.Invoke();
+    }
+    
+    public void SendDieRolled(DieSide side) //reactions that modify dice rolls
+    {
+        //careful not to allow these changes to perminantly change the dice
+        Reactions.onDiceRoll?.Invoke();
+    }
+
+    public void SendRollResult(Mana rolledMana)
+    {
+        
+        Reactions.onRollResult?.Invoke();
     }
 
 }

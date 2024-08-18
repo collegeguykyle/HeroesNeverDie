@@ -21,7 +21,7 @@ public class DiceRoller : MonoBehaviour
     {
         if (dice != null)
         {
-            Sides = dice.Sides;
+            Sides = dice.DiceSides;
             SpawnSides();
             StartCoroutine("RollDie");
         }

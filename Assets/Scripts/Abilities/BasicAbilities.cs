@@ -18,8 +18,9 @@ public class Melee1 : Ability
         
     }
 
-    public override bool TestValidTarget()
+    public override List<IOccupyBattleSpace> TestValidTargets()
     {
-        return true;
+        List <IOccupyBattleSpace> options = new List < IOccupyBattleSpace >();
+        return options;
     }
 }

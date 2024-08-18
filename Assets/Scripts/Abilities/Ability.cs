@@ -9,6 +9,7 @@ public abstract class Ability
     public string Name;
     public Mana cost;
     public Unit OwningUnit;
+    public int Range;
 
     public Ability(Unit unit)
     {
@@ -21,7 +22,7 @@ public abstract class Ability
 
     }
 
-    public abstract bool TestValidTarget();
+    public abstract List<IOccupyBattleSpace> TestValidTargets();
     public abstract void GetTargets(); //probably needs to return a list of units or targetables
     public abstract void ExecuteAbility();
 }
