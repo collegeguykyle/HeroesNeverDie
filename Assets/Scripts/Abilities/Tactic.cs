@@ -32,6 +32,11 @@ public class Tactic
             else return false; 
     }
 
+    private bool TestEngaged()
+    {
+        return 
+    }
+
     public void ChooseTarget()
     {
         //if ability should be used, where should it cast?

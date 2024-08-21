@@ -16,11 +16,10 @@ public class Unit : IOccupyBattleSpace
     public int Actions = 1;
     public int SwiftActions = 1;
 
-    public bool PassTurn = false;
-
     public Mana Mana = new Mana();
 
     public List<Ability> Abilities = new List<Ability>();
+    public List<Tactic> Tactics = new List<Tactic>();
     public List<Reaction> Reactions = new List<Reaction>();
 
     public int StartingRow = 0;
@@ -37,26 +36,30 @@ public class Unit : IOccupyBattleSpace
         // [ ] Do start of battle conditons and actions
     }
 
-    public void TakeTurn()
-    {
-        Battle.SendStartUnitTurn(this);
-        RollDice();
-        while (PassTurn == false)
-        {
-            UseAbility(ChooseAbility());
-        }
-        EndTurn();
-    }
 
     private Ability ChooseAbility()
     {
+        // [ ] cylce through abilities in the list until we find one that works
+        foreach (Ability ability in Abilities) 
+        {
+            bool manaToCast = ability.TestManaCost(Mana);
+            
+        
+        }
+
+
+        // [ ] Step 2: melee or ranged?
+
+
+        // [ ] Step 3: cast locations in move range?
+
+
+        // [ ] use the ability
+
+        
+        // [ ] if no abilities can be used then pass the turn
 
         return new Melee1(this); //temp
-    }
-
-    private void UseAbility(Ability ability)
-    {
-
     }
 
 
@@ -81,11 +84,11 @@ public class Unit : IOccupyBattleSpace
     }
 
 
-    private void EndTurn()
+    public void EndTurn()
     {
-        PassTurn = false;
+
         //reset mana
-        Battle.SendEndUnitTurn(this);
+
     }
 
 }

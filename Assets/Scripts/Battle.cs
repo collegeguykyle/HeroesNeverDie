@@ -14,7 +14,7 @@ public class Battle
     private Reactions Reactions = new Reactions();
     private Unit CurrentUnit;
     private bool BattleOver = false;
-
+    private List<Engagement> Engagements = new List<Engagement>();
 
     public Battle(List<Unit> playerTeam, List<Unit> enemyTeam)
     {
@@ -37,9 +37,27 @@ public class Battle
         while (BattleOver == false)
         {
             CurrentUnit = TurnOrder.GetCurrentUnit();  //Turn Order advances to next unit in End Unit Turn step
-            CurrentUnit.TakeTurn();
+            TakeUnitTurn();
         }
         SendEndBattle();
+    }
+
+    private void TakeUnitTurn()
+    {
+        SendStartUnitTurn(CurrentUnit);
+        CurrentUnit.RollDice();
+        bool passTurn = false;
+        List<Tactic> Tactics = new List<Tactic>();
+        while (passTurn == false)
+        {
+            foreach (Tactic tactic in Tactics)
+            {
+
+
+            }
+        }
+        CurrentUnit.EndTurn();
+        SendEndUnitTurn(CurrentUnit);
     }
 
 
@@ -83,6 +101,46 @@ public class Battle
         Reactions.onRollResult?.Invoke();
     }
 
+    public void AddEngagement(Unit Attacker, Unit Victim)
+    {
+        Engagements.Add(new Engagement(Attacker, Victim));
+    }
+
+    public void RemoveEngagement(Unit Attacker, Unit Victim)
+    {
+        foreach (Engagement E in Engagements)
+        {
+            if (E.Compare(Attacker, Victim)) Engagements.Remove(E);
+        }
+    }
+
+    public bool TestEngaged (Unit unit)
+    {
+        bool isEngaged = false;
+        foreach(Engagement E in Engagements)
+        {
+            if (E.Victim == unit) isEngaged = true;
+        }
+        return isEngaged;
+    }
+}
+
+public class Engagement
+{
+    public Engagement(Unit attacker, Unit victim)
+    {
+        Attacker = attacker;
+        Victim = victim;
+    }
+    
+    public Unit Attacker;
+    public Unit Victim;
+
+    public bool Compare (Unit attacker, Unit victim)
+    {
+        if (attacker == Attacker && victim == Victim) return true;
+        else return false;
+    }
 }
 
 
