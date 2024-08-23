@@ -11,13 +11,18 @@ public class Unit : IOccupyBattleSpace
     public int MaxHP = 10;
     public int CurrentHP = 10;
 
-    List<Dice> DiceList = new List<Dice>();
+    public int MaxActions = 1;
+    public int CurrentActions = 1;
 
-    public int Actions = 1;
-    public int SwiftActions = 1;
+    public int MaxSwift = 1;
+    public int CurrentSwift = 1;
+    
+    public int MaxMove = 3;
+    public int CurrentMove = 3;
 
     public Mana Mana = new Mana();
 
+    List<Dice> DiceList = new List<Dice>();
     public List<Ability> Abilities = new List<Ability>();
     public List<Tactic> Tactics = new List<Tactic>();
     public List<Reaction> Reactions = new List<Reaction>();
@@ -34,32 +39,6 @@ public class Unit : IOccupyBattleSpace
     {
         Battle = battle;
         // [ ] Do start of battle conditons and actions
-    }
-
-
-    private Ability ChooseAbility()
-    {
-        // [ ] cylce through abilities in the list until we find one that works
-        foreach (Ability ability in Abilities) 
-        {
-            bool manaToCast = ability.TestManaCost(Mana);
-            
-        
-        }
-
-
-        // [ ] Step 2: melee or ranged?
-
-
-        // [ ] Step 3: cast locations in move range?
-
-
-        // [ ] use the ability
-
-        
-        // [ ] if no abilities can be used then pass the turn
-
-        return new Melee1(this); //temp
     }
 
 

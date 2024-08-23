@@ -18,28 +18,30 @@ public class Tactic
         Condition2 = condition2;
     }
 
-    public bool TestTactic(Mana AvailableMana, BattleSpacesController Map)
+    public bool TestTactic(Battle battleController, BattleSpacesController map, Mana AvailableMana)
     {
-        
-        if (
-            Ability.TestManaCost(AvailableMana)     //enough mana?
-            && TestTargets(Map)                     //any targets in range?
-            && TestSelfCondition(Condition1)
-            && TestSelfCondition(Condition2)        //any exlusionary conditions?
-            )
-            return true; //then this ability should be used
+        if (!ConditionsMet(battleController, AvailableMana)) return false; //Can we use the tactic?
+        if (!TestTargets(map)) return false;  //Can we target an enemy from where we currently are?
 
-            else return false; 
+        // [ ] Do any of the target options meet TConditions?
+        return true;
     }
 
-    private bool TestEngaged()
+    //movement abilities will also want to know if a tactic can be used to determine if we should
+    //consider it when setting move to location options
+    private bool ConditionsMet(Battle battleController,  Mana AvailableMana)
     {
-        return 
-    }
+        if (!Ability.TestManaCost(AvailableMana)) return false; //enough mana?
 
-    public void ChooseTarget()
-    {
-        //if ability should be used, where should it cast?
+        if (!TestSelfCondition(Condition1)) return false;
+        if (!TestSelfCondition(Condition2)) return false;        //any exlusionary conditions?
+
+        bool engaged = battleController.TestEngaged(Owner);
+        if (engaged && !Ability.UseEngaged) return false;        //if unit is engaged can this ability be used?
+
+        if (Ability.Range == 0 && Owner.CurrentMove < 1) return false; //if move ability and no movement points
+
+        return true;
     }
 
     private bool TestTargets(BattleSpacesController Map) //return true if an enemy is in range of ability

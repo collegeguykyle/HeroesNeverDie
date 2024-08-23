@@ -46,14 +46,15 @@ public class Battle
     {
         SendStartUnitTurn(CurrentUnit);
         CurrentUnit.RollDice();
+        List<Tactic> Tactics = CurrentUnit.Tactics;
+
         bool passTurn = false;
-        List<Tactic> Tactics = new List<Tactic>();
         while (passTurn == false)
         {
             foreach (Tactic tactic in Tactics)
             {
-
-
+                bool CanUseAction = tactic.TestTactic(this, SpaceController, CurrentUnit.Mana);
+                //if canUseAction is true then use the ability in the tactic and break out of this foreach.
             }
         }
         CurrentUnit.EndTurn();

@@ -9,7 +9,7 @@ public abstract class Ability
     public abstract string Name { get; set; }
     public abstract Mana cost { get; set; }
     public abstract Unit OwningUnit { get; set; }
-    public abstract int Range { get; set; }
+    public abstract int Range { get; set; } // range 0 = movement ability
     public abstract bool UseEngaged { get; set; }
 
     public Ability(Unit unit)
