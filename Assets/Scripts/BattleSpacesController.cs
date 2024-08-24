@@ -80,6 +80,15 @@ public class BattleSpacesController
         else return battleSpaces[Row - 1, Col - 1];
     }
 
+    public BattleSpace GetSpaceOf(IOccupyBattleSpace actor)
+    {
+        foreach (BattleSpace space in battleSpaces)
+        {
+            if (space.isInSpace == actor) return space;
+        }
+        return null;
+    }
+
     public List<IOccupyBattleSpace> GetTargetsInRange(int Row, int Col, int range, Team targetsTeam, bool excludeStart)
     {
         // *****TODO***** should return a list of all units within X range of the given row/col

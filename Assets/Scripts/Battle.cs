@@ -48,15 +48,26 @@ public class Battle
         CurrentUnit.RollDice();
         List<Tactic> Tactics = CurrentUnit.Tactics;
 
+        //itterate through unit's tactics in order of priority until we find one that can be used, and use it
+        //if we use an abiltiy, repeat the process. Can use any number of abilities on a turn if mana remains
+        //and abilities have sufficient uses available. If we itterate through full list without finding
+        //an abiltiy to use, then the unit cannot do anything and passes the turn.
         bool passTurn = false;
-        while (passTurn == false)
+        do 
         {
+            passTurn = true;
             foreach (Tactic tactic in Tactics)
             {
                 bool CanUseAction = tactic.TestTactic(this, SpaceController, CurrentUnit.Mana);
-                //if canUseAction is true then use the ability in the tactic and break out of this foreach.
+                if (CanUseAction)
+                {
+                    tactic.Execute();
+                    passTurn = false;
+                    break;
+                }
             }
-        }
+        } while (!passTurn);
+
         CurrentUnit.EndTurn();
         SendEndUnitTurn(CurrentUnit);
     }

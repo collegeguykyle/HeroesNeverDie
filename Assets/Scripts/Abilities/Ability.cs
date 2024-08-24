@@ -11,6 +11,7 @@ public abstract class Ability
     public abstract Unit OwningUnit { get; set; }
     public abstract int Range { get; set; } // range 0 = movement ability
     public abstract bool UseEngaged { get; set; }
+    public abstract Team targets { get; set; }
 
     public Ability(Unit unit)
     {
