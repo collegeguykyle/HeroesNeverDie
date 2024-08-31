@@ -21,20 +21,35 @@ public class Tactic
 
     public bool TestTactic(Battle battleController, BattleSpacesController map, Mana AvailableMana)
     {
-        if (!ConditionsMet(battleController, AvailableMana)) return false; //Can we use the tactic?
-        List<IOccupyBattleSpace> targets = TargetsInRangeOfOwner(map); //Can unit target an enemy from where it is?
+        if (!BasicConditionsMet(battleController, AvailableMana)) return false; //3-5: Can we use the tactic?
+        
+        List<IOccupyBattleSpace> targets = TargetsInRangeOfOwner(map); //6: Can unit target an enemy with it from where it is?
         if (targets.Count == 0) return false;  
-        foreach (IOccupyBattleSpace target in targets)
+        
+        foreach (IOccupyBattleSpace target in targets) //7: If a mandatory target condition, ensure an options meets requirement
         {
-            if (target == null) continue;
-
+            if (!TestTargetRequirements(Condition1, target, map)) return false;
+            if (!TestTargetRequirements(Condition2, target, map)) return false;
         }
-        // [ ] ***TODO*** Do any of the target options meet TConditions?
+
+        //8: Filter out options based on condition priorities
+        targets = TestTargetPrefernce(Condition1, targets, battleController);
+        targets = TestTargetPrefernce(Condition2, targets, battleController);
+
+        //9: Choose an option based on what options remain
+        IOccupyBattleSpace FinalTarget = TargetSelector(Condition1, targets, map);        //returns null if condition is not a final selector
+        if (FinalTarget == null) FinalTarget = TargetSelector(Condition2, targets, map);  //returns null if condition is not a final selector
+        if (FinalTarget == null)                                                          //if no final selector condition, choose a random target from filtered options
+        {
+            int rand = Random.Range(0, targets.Count);
+            FinalTarget = targets[rand];
+        }
+        Ability.ExecuteAbility(FinalTarget); //*****10: Execute the ability against the chosen target*****
         return true;
     }
 
 
-    private bool ConditionsMet(Battle battleController,  Mana AvailableMana)
+    private bool BasicConditionsMet(Battle battleController,  Mana AvailableMana)
     {
         if (!Ability.TestManaCost(AvailableMana)) return false; //enough mana?
 
@@ -125,6 +140,7 @@ public class Tactic
 
     private List<IOccupyBattleSpace> TestTargetPrefernce(TCondition condition, List<IOccupyBattleSpace> targets, Battle BC)
     {
+        if (targets.Count == 1) return targets;
         List<IOccupyBattleSpace> yesList = new List<IOccupyBattleSpace>();
         switch (condition)
         {
@@ -152,9 +168,10 @@ public class Tactic
         return targets;
     }
 
-    private IOccupyBattleSpace TestTargetSelector(TCondition condition, List<IOccupyBattleSpace> targets, BattleSpacesController map) //returns which target to preference from the list based on the given TCondition
+    private IOccupyBattleSpace TargetSelector(TCondition condition1, List<IOccupyBattleSpace> targets, BattleSpacesController map) //returns which target to preference from the list based on the given TCondition
     {
-        switch (condition)
+        if (targets.Count == 1) return targets[0];
+        switch (condition1)
         {
             case TCondition.HighestMaxHP: 
                 IOccupyBattleSpace choice = null;
@@ -238,7 +255,8 @@ public enum TCondition
     None, HP100, HPless75, HPless50, HPless25, HPmore25, HPmore50, HPmore75,
     Flanked, OutMelee, InMelee, 
 
-    //Target requirement conditions
+    //Target requirement conditions: one or more potential targets MUST meet the condition or move to next tactic.
+    //these then ALSO need to filter the potential targets as a preference
     Hit2, Hit3, Hit4,
 
     //Target preference conditions

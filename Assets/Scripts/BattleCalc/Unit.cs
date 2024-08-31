@@ -20,7 +20,15 @@ public class Unit : IOccupyBattleSpace
     public int MaxMove = 3;
     public int CurrentMove = 3;
 
+    public int PWR = 1;
+    public int AGL = 1;
+    public int INT = 1;
+    public int ATN = 1;
+    public int FTH = 1;
+    public int LCK = 1;
+
     public Mana Mana = new Mana();
+    public Mana ManaLost = new Mana();
 
     List<Dice> DiceList = new List<Dice>();
     public List<Ability> Abilities = new List<Ability>();
@@ -38,7 +46,11 @@ public class Unit : IOccupyBattleSpace
     public void BattleStart(Battle battle)
     {
         Battle = battle;
-        // [ ] Do start of battle conditons and actions
+        foreach (Reaction r in Reactions)
+        {
+            if (r.ReactionType == BattleReaction.StartOfCombat) r.DoReaction();
+            else battle.AddReaction(r);
+        }
     }
 
 
@@ -62,11 +74,29 @@ public class Unit : IOccupyBattleSpace
         Mana.AddMana(rolled);
     }
 
+    public int GetDodge()
+    {
+        return AGL;
+    }
+    public int GetBlock()
+    {
+        return PWR;
+    }
+    public int GetParry()
+    {
+        return AGL;
+    }
+    public int GetAura()
+    {
+        return ATN;
+    }
+
 
     public void EndTurn()
     {
-
         //reset mana
+        ManaLost = Mana; //stored mana lost for reference by certain end of turn reactions that need this information
+        Mana = new Mana();
 
     }
 

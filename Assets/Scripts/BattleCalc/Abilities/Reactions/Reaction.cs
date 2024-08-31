@@ -23,7 +23,7 @@ public abstract class Reaction
 {
     public BattleReaction ReactionType { get; set; }
     public Unit Owner { get; set; }
-    public abstract void OnReaction();
+    public abstract void DoReaction();
     public bool TestReaction(BattleReaction reaction)
     {
         if (reaction == ReactionType) return true;
@@ -53,23 +53,23 @@ public class Reactions
         switch (reaction.ReactionType)
         {
             case BattleReaction.StartOfTurn:
-                onStartOfTurn += reaction.OnReaction; break;
+                onStartOfTurn += reaction.DoReaction; break;
             case BattleReaction.DiceRoll:
-                onDiceRoll += reaction.OnReaction; break;
+                onDiceRoll += reaction.DoReaction; break;
             case BattleReaction.RollResult:
-                onRollResult += reaction.OnReaction; break;
+                onRollResult += reaction.DoReaction; break;
             case BattleReaction.Targeting:
-                onTargeting += reaction.OnReaction; break;
+                onTargeting += reaction.DoReaction; break;
             case BattleReaction.HitResult:
-                onHitResult += reaction.OnReaction; break;
+                onHitResult += reaction.DoReaction; break;
             case BattleReaction.AbilityComplete:
-                onAbilityComplete += reaction.OnReaction; break;
+                onAbilityComplete += reaction.DoReaction; break;
             case BattleReaction.EndOfTurn:
-                onEndOfTurn += reaction.OnReaction; break;
+                onEndOfTurn += reaction.DoReaction; break;
             case BattleReaction.EndOfBattle:
-                onEndOfBattle += reaction.OnReaction; break;
+                onEndOfBattle += reaction.DoReaction; break;
             case BattleReaction.UnitDeath:
-                onUnitDeath += reaction.OnReaction; break;
+                onUnitDeath += reaction.DoReaction; break;
         }
     }
 
@@ -78,23 +78,23 @@ public class Reactions
         switch (reaction.ReactionType)
         {
             case BattleReaction.StartOfTurn:
-                onStartOfTurn -= reaction.OnReaction; break;
+                onStartOfTurn -= reaction.DoReaction; break;
             case BattleReaction.DiceRoll:
-                onDiceRoll -= reaction.OnReaction; break;
+                onDiceRoll -= reaction.DoReaction; break;
             case BattleReaction.RollResult:
-                onRollResult -= reaction.OnReaction; break;
+                onRollResult -= reaction.DoReaction; break;
             case BattleReaction.Targeting:
-                onTargeting -= reaction.OnReaction; break;
+                onTargeting -= reaction.DoReaction; break;
             case BattleReaction.HitResult:
-                onHitResult -= reaction.OnReaction; break;
+                onHitResult -= reaction.DoReaction; break;
             case BattleReaction.AbilityComplete:
-                onAbilityComplete -= reaction.OnReaction; break;
+                onAbilityComplete -= reaction.DoReaction; break;
             case BattleReaction.EndOfTurn:
-                onEndOfTurn -= reaction.OnReaction; break;
+                onEndOfTurn -= reaction.DoReaction; break;
             case BattleReaction.EndOfBattle:
-                onEndOfTurn -= reaction.OnReaction; break;
+                onEndOfTurn -= reaction.DoReaction; break;
             case BattleReaction.UnitDeath:
-                onUnitDeath -= reaction.OnReaction; break;
+                onUnitDeath -= reaction.DoReaction; break;
         }
     }
 

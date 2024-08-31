@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using AYellowpaper;
 using AYellowpaper.SerializedCollections;
 
-[Serializable] public enum ManaType { sword, shield, bow, magic, light, shadow, earth, wind, water, fire, nature, shock, ice, poinson, gear, };
+[Serializable] public enum ManaType { sword, shield, bow, magic, light, shadow, earth, wind, water, fire, nature, shock, ice, poison, gear, };
 
 [Serializable]
 public class Mana

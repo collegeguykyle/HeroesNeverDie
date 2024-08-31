@@ -5,12 +5,17 @@ using UnityEngine;
 
 public class Battle 
 {
+    //This class is the core of the game!!  It should be run on the server with results (Battle Report)
+    //return back to the player client.
+    //It takes two teams as inputs and fully calculates the result of the fight progmatically.
+    //As it calculates the fight, it records everything in a Battle Report, which is what is 
+    //the player client uses to create a replay of the battle which they watch to see the results.
 
     private List<Unit> PlayerTeam;
     private List<Unit> EnemyTeam;
     private BattleSpacesController SpaceController = new BattleSpacesController();
     private TurnOrder TurnOrder;
-    private BattleLog BattleLog = new BattleLog();
+    private BattleReport BattleReport = new BattleReport();
     private Reactions Reactions = new Reactions();
     private Unit CurrentUnit;
     private bool BattleOver = false;
@@ -20,6 +25,7 @@ public class Battle
     {
         PlayerTeam = playerTeam;
         EnemyTeam = enemyTeam;
+        BattleReport.SetTeams(playerTeam, enemyTeam);
 
         SpaceController.PlaceEnemyTeam(EnemyTeam);
         SpaceController.PlacePlayerTeam(PlayerTeam);
@@ -44,11 +50,11 @@ public class Battle
 
     private void TakeUnitTurn()
     {
-        SendStartUnitTurn(CurrentUnit);
-        CurrentUnit.RollDice();
+        SendStartUnitTurn(CurrentUnit); 
+        CurrentUnit.RollDice(); //1: Unit rolls mana
         List<Tactic> Tactics = CurrentUnit.Tactics;
 
-        //itterate through unit's tactics in order of priority until we find one that can be used, and use it
+        //2: itterate through unit's tactics in order of priority until we find one that can be used, and use it
         //if we use an abiltiy, repeat the process. Can use any number of abilities on a turn if mana remains
         //and abilities have sufficient uses available. If we itterate through full list without finding
         //an abiltiy to use, then the unit cannot do anything and passes the turn.
@@ -58,10 +64,9 @@ public class Battle
             passTurn = true;
             foreach (Tactic tactic in Tactics)
             {
-                bool CanUseAction = tactic.TestTactic(this, SpaceController, CurrentUnit.Mana);
-                if (CanUseAction)
+                bool TacticUsed = tactic.TestTactic(this, SpaceController, CurrentUnit.Mana);
+                if (TacticUsed)
                 {
-                    tactic.Execute();
                     passTurn = false;
                     break;
                 }
@@ -72,7 +77,29 @@ public class Battle
         SendEndUnitTurn(CurrentUnit);
     }
 
+    private void rollAttack()
+    {
 
+    }
+
+#region Reaction Event Invokers
+
+    public void SendStartUnitTurn(Unit unit)
+    {
+        BattleReport.AddReport(new ReportStartTurn(unit));
+        Reactions.onStartOfTurn?.Invoke();
+    }
+
+    public void SendDieRolled(DieSide side) //reactions that modify dice rolls
+    {
+        //careful not to allow these changes to perminantly change the dice
+        Reactions.onDiceRoll?.Invoke();
+    }
+    public void SendRollResult(Mana rolledMana)
+    {
+        
+        Reactions.onRollResult?.Invoke();
+    }
 
     private void SendUseAbility(Unit target, Ability ability)
     {
@@ -91,26 +118,43 @@ public class Battle
     private void SendEndBattle()
     {
         Reactions.onEndOfBattle?.Invoke();
+        BattleOver = true;
         //[ ] push the log somewhere via an event broadcast
     }
 
-    
-    public void SendStartUnitTurn(Unit unit)
+    public void SendUnitDeath(Unit unit)
     {
-
-        Reactions.onStartOfTurn?.Invoke();
+        if(unit.Team == Team.player)
+        {
+            bool allDead = true;
+            foreach (Unit u in PlayerTeam)
+            {
+                if (u.CurrentHP > 0) allDead = false;
+            }
+            if (allDead) SendEndBattle();
+        }
+        if (unit.Team == Team.enemy)
+        {
+            bool allDead = true;
+            foreach (Unit u in EnemyTeam)
+            {
+                if (u.CurrentHP > 0) allDead = false;
+            }
+            if (allDead) SendEndBattle();
+        }
     }
-    
-    public void SendDieRolled(DieSide side) //reactions that modify dice rolls
-    {
-        //careful not to allow these changes to perminantly change the dice
-        Reactions.onDiceRoll?.Invoke();
-    }
+ 
+#endregion
 
-    public void SendRollResult(Mana rolledMana)
+
+#region Engagements
+    public void AddReaction(Reaction reaction)
     {
-        
-        Reactions.onRollResult?.Invoke();
+        Reactions.AddReaction(reaction);
+    }
+    public void RemoveReaction(Reaction reaction)
+    {
+        Reactions.RemoveReaction(reaction);
     }
 
     public void AddEngagement(Unit Attacker, Unit Victim)
@@ -135,6 +179,9 @@ public class Battle
         }
         return isEngaged;
     }
+
+ #endregion
+
 }
 
 public class Engagement
