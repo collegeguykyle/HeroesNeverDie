@@ -24,11 +24,20 @@ public class ResultTargetting
         Targets.Add(targetData);
     }
 
-    public bool TargetInRange()
+    public bool TargetInRange() //return true if at least one target is within range
     {
         foreach (TargetData data in Targets)
         {
             if (data.inRange) return true;
+        }
+        return false;
+    }
+
+    public bool TargetWithRequirements() //return true if at least one target within range meets targeting requirements
+    {
+        foreach (TargetData data in Targets)
+        {
+            if (data.TacticRequirement && data.inRange) return true;
         }
         return false;
     }

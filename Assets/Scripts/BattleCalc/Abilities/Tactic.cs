@@ -34,6 +34,7 @@ public class Tactic
             if (TestTargetRequirements(Condition1, target.targetType, map)) target.TacticRequirement = true; else target.TacticRequirement = false;
             if (TestTargetRequirements(Condition2, target.targetType, map)) target.TacticRequirement = true; else target.TacticRequirement = false;
         }
+        if (TargettingData.TargetInRange()) return false;
 
         //8: Filter out options based on condition priorities
         TargettingData = TestTargetPrefernce(Condition1, TargettingData, battleController);
