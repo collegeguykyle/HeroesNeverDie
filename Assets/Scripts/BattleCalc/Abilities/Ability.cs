@@ -10,6 +10,7 @@ public abstract class Ability
     public abstract Mana cost { get; protected set; }
     public abstract Unit OwningUnit { get; protected set; }
     public abstract int Range { get; protected set; } // range 0 = movement ability
+    public abstract int AOESize { get; protected set; }
     public abstract bool UseEngaged { get; protected set; }
     public abstract Team targets { get; protected set; }
     public abstract List<AttackType> GetAttackTypes { get; protected set; }
@@ -27,7 +28,7 @@ public abstract class Ability
     }
     
     
-    public abstract void ExecuteAbility(IOccupyBattleSpace target);
+    public abstract void ExecuteAbility(ResultTargetting TargettingData);
 }
 
 public enum AttackType { Ranged, Melee, Physical, Smashing, Slashing, Stabbing, 

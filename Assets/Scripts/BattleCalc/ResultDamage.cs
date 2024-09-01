@@ -4,14 +4,14 @@ using System.Linq;
 using UnityEngine;
 
 
-public class DamageResult
+public class ResultDamage
 {
 
 
 
-    public static DamageResult RollDamage(AttackResult attack)
+    public static ResultDamage RollDamage(ResultHit attack)
     {
-        DamageResult result = new DamageResult();
+        ResultDamage result = new ResultDamage();
 
         //take in min and max damage
 

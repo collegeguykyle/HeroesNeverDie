@@ -21,36 +21,40 @@ public class Tactic
 
     public bool TestTactic(Battle battleController, BattleSpacesController map, Mana AvailableMana)
     {
-        if (!BasicConditionsMet(battleController, AvailableMana)) return false; //3-5: Can we use the tactic?
-        
-        List<IOccupyBattleSpace> targets = TargetsInRangeOfOwner(map); //6: Can unit target an enemy with it from where it is?
-        if (targets.Count == 0) return false;  
-        
-        foreach (IOccupyBattleSpace target in targets) //7: If a mandatory target condition, ensure an options meets requirement
+        //3-5: Are basic requirements to use the tactic met? Unit alive, enough mana, etc
+        if (!BasicConditionsMet(battleController, AvailableMana)) return false; 
+
+        //6: Can unit target an enemy with it from where it is?
+        ResultTargetting TargettingData = map.GetTargets(Ability); 
+        if (!TargettingData.TargetInRange()) return false;
+
+        //7: If a mandatory target condition, ensure options meets requirement
+        foreach (TargetData target in TargettingData.Targets) 
         {
-            if (!TestTargetRequirements(Condition1, target, map)) return false;
-            if (!TestTargetRequirements(Condition2, target, map)) return false;
+            if (TestTargetRequirements(Condition1, target.targetType, map)) target.TacticRequirement = true; else target.TacticRequirement = false;
+            if (TestTargetRequirements(Condition2, target.targetType, map)) target.TacticRequirement = true; else target.TacticRequirement = false;
         }
 
         //8: Filter out options based on condition priorities
-        targets = TestTargetPrefernce(Condition1, targets, battleController);
-        targets = TestTargetPrefernce(Condition2, targets, battleController);
+        TargettingData = TestTargetPrefernce(Condition1, TargettingData, battleController);
+        TargettingData = TestTargetPrefernce(Condition2, TargettingData, battleController);
 
-        //9: Choose an option based on what options remain
-        IOccupyBattleSpace FinalTarget = TargetSelector(Condition1, targets, map);        //returns null if condition is not a final selector
-        if (FinalTarget == null) FinalTarget = TargetSelector(Condition2, targets, map);  //returns null if condition is not a final selector
-        if (FinalTarget == null)                                                          //if no final selector condition, choose a random target from filtered options
-        {
-            int rand = Random.Range(0, targets.Count);
-            FinalTarget = targets[rand];
-        }
-        Ability.ExecuteAbility(FinalTarget); //*****10: Execute the ability against the chosen target*****
+        //9.1: If one of the conditions is a selector, use it to select the final target
+        TargettingData = TestTargetSelector(Condition1, TargettingData, map);        
+        TargettingData = TestTargetSelector(Condition2, TargettingData, map);
+
+        //9.2: If no final selector condition, choose closest, then randomly --OR-- ability has prefered Selector if player does not input one
+        if (TargettingData.SelectedTarget == null) TargettingData = TestTargetSelector(TCondition.Closest, TargettingData, map);
+
+        //*****10: Execute the ability against the chosen target*****
+        Ability.ExecuteAbility(TargettingData);
         return true;
     }
 
 
     private bool BasicConditionsMet(Battle battleController,  Mana AvailableMana)
     {
+        if(Owner.CurrentHP <= 0) return false;                  //Unit still alive?
         if (!Ability.TestManaCost(AvailableMana)) return false; //enough mana?
 
         if (!TestSelfCondition(Condition1)) return false;
@@ -62,14 +66,6 @@ public class Tactic
         if (Ability.Range == 0 && Owner.CurrentMove < 1) return false; //if move ability and no movement points
 
         return true;
-    }
-
-    private List<IOccupyBattleSpace> TargetsInRangeOfOwner(BattleSpacesController Map) //returns list of targets in range of ability
-    {
-        BattleSpace space = Map.GetSpaceOf(Owner);
-        Team targetTeam = TargetConversion(Owner, Ability.targets); 
-        List<IOccupyBattleSpace> targets = Map.GetTargetsInRange(space.row, space.col, Ability.Range, targetTeam, true);
-        return targets;
     }
 
     private Team TargetConversion(Unit unit, Team target)
@@ -138,114 +134,135 @@ public class Tactic
         return true;
     }
 
-    private List<IOccupyBattleSpace> TestTargetPrefernce(TCondition condition, List<IOccupyBattleSpace> targets, Battle BC)
+    private ResultTargetting TestTargetPrefernce(TCondition condition, ResultTargetting targets, Battle BC)
     {
-        if (targets.Count == 1) return targets;
-        List<IOccupyBattleSpace> yesList = new List<IOccupyBattleSpace>();
         switch (condition)
         {
             case TCondition.Engaged:
-                foreach(IOccupyBattleSpace target in targets)
+                foreach(TargetData target in targets.Targets)
                 {
-                    if (target is Unit)
+                    if (target.targetType is Unit)
                     {
-                        if (BC.TestEngaged(target as Unit)) yesList.Add(target);
+                        if (BC.TestEngaged(target.targetType as Unit))
+                        {
+                            target.TacticPreference = true;
+                            target.PriorityScore++;
+                            if (!targets.PriorityList.Contains(target)) targets.PriorityList.Add(target);
+                        }
                     }
                 }
-                if (yesList.Count > 0) return yesList;
-                else return targets;
+                break;
             case TCondition.NotEngaged:
-                foreach (IOccupyBattleSpace target in targets)
+                foreach (TargetData target in targets.Targets)
                 {
-                    if (target is Unit)
+                    if (target.targetType is Unit)
                     {
-                        if (!BC.TestEngaged(target as Unit)) yesList.Add(target);
+                        if (!BC.TestEngaged(target.targetType as Unit))
+                        {
+                            target.TacticPreference = true;
+                            target.PriorityScore++;
+                            if (!targets.PriorityList.Contains(target)) targets.PriorityList.Add(target);
+                        }
                     }
                 }
-                if (yesList.Count > 0) return yesList;
-                else return targets;
+                break;
         }
         return targets;
     }
 
-    private IOccupyBattleSpace TargetSelector(TCondition condition1, List<IOccupyBattleSpace> targets, BattleSpacesController map) //returns which target to preference from the list based on the given TCondition
+    private ResultTargetting TestTargetSelector(TCondition condition1, ResultTargetting targets, BattleSpacesController map) //player can only choose one selector as they can only ever return one choice from a list of options
     {
-        if (targets.Count == 1) return targets[0];
+        List<TargetData> targetsList = new List<TargetData>();
+        if (targets.PriorityList.Count > 0) targetsList = targets.PriorityList;
+        else targetsList = targets.Targets;
+        TargetData choice = new TargetData();
         switch (condition1)
         {
-            case TCondition.HighestMaxHP: 
-                IOccupyBattleSpace choice = null;
+            case TCondition.HighestMaxHP:
+                choice = null;
                 int HighHP = 0;
-                foreach (IOccupyBattleSpace target in targets)
+                foreach (TargetData target in targets.Targets)
                 {
                     int HP = 0;
-                    if (target is Unit) HP = (target as Unit).MaxHP;
+                    if (target.targetType is Unit) HP = (target.targetType as Unit).MaxHP;
                     if (HP > HighHP)
                     {
                         HighHP = HP;
+                        target.PriorityScore += 2;
+                        target.TacticPriority = true;
                         choice = target;
                     }
                 }
-                return choice;
-            case TCondition.LowestMaxHP: 
+                targets.SetSelectedTarget(choice);
+                break;
+            case TCondition.LowestMaxHP:
                 choice = null;
                 int LowHP = 0;
-                foreach (IOccupyBattleSpace target in targets)
+                foreach (TargetData target in targets.Targets)
                 {
                     int HP = 9999;
-                    if (target is Unit) HP = (target as Unit).MaxHP;
+                    if (target.targetType is Unit) HP = (target.targetType as Unit).MaxHP;
                     if (HP < LowHP)
                     {
                         LowHP = HP;
+                        target.PriorityScore += 2;
+                        target.TacticPriority = true;
                         choice = target;
                     }
                 }
-                return choice;
+                targets.SetSelectedTarget(choice);
+                break;
             case TCondition.HighestCurrentHP: 
                 choice = null;
                 HighHP = 0;
-                foreach (IOccupyBattleSpace target in targets)
+                foreach (TargetData target in targets.Targets)
                 {
                     int HP = 0;
-                    if (target is Unit) HP = (target as Unit).CurrentHP;
+                    if (target.targetType is Unit) HP = (target.targetType as Unit).CurrentHP;
                     if (HP > HighHP)
                     {
                         HighHP = HP;
+                        target.PriorityScore += 2;
+                        target.TacticPriority = true;
                         choice = target;
                     }
                 }
-                return choice;
+                targets.SetSelectedTarget(choice);
+                break;
             case TCondition.LowestCurrentHP: 
                 choice = null;
                 LowHP = 9999;
-                foreach (IOccupyBattleSpace target in targets)
+                foreach (TargetData target in targets.Targets)
                 {
                     int HP = 9999;
-                    if (target is Unit) HP = (target as Unit).CurrentHP;
+                    if (target.targetType is Unit) HP = (target.targetType as Unit).CurrentHP;
                     if (HP < LowHP)
                     {
                         LowHP = HP;
+                        target.PriorityScore += 2;
+                        target.TacticPriority = true;
                         choice = target;
                     }
                 }
-                return choice;
+                targets.SetSelectedTarget(choice);
+                break;
             case TCondition.Closest:
                 choice = null;
                 int lowDist = 999;
-                foreach (IOccupyBattleSpace target in targets)
+                foreach (TargetData target in targets.Targets)
                 {
-                    BattleSpace targetSpace = map.GetSpaceOf(target);
-                    BattleSpace ownerSpace = map.GetSpaceOf(Owner);
-                    int dist = map.CalculateDistance(ownerSpace.row, ownerSpace.col, targetSpace.row, targetSpace.col);
-                    if (dist < lowDist)
+                    if (target.rangeTo < lowDist)
                     {
-                        lowDist = dist;
+                        lowDist = target.rangeTo;
+                        target.PriorityScore += 2;
+                        target.TacticPriority = true;
                         choice = target;
                     }
                 }
-                return choice;
+                targets.SetSelectedTarget(choice);
+                break;
         }
-        return null;
+        return targets;
     }
 }
 

@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class AttackResult
+public class ResultHit
 {
+    public Ability Ability;
+    public Unit Target;
+
     public int roll = 0;
 
     public bool hit = false;
@@ -16,11 +19,15 @@ public class AttackResult
     public DefenseType defenseType;
     public int defenseValue = 0;
 
-
-
-    public static AttackResult TryHit(Ability ability, Unit target)
+    public ResultHit(Ability ability, Unit target)
     {
-        AttackResult result = new AttackResult();
+        Ability = ability;
+        Target = target;
+    }
+
+    public static ResultHit TryHit(Ability ability, Unit target)
+    {
+        ResultHit result = new ResultHit(ability, target);
 
         result.attackBonus = ability.GetBonus;
 

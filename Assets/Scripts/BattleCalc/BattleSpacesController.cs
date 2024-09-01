@@ -6,10 +6,13 @@ using UnityEngine;
 
 public class BattleSpacesController
 {
-
+    private List<Unit> PlayerTeam;
+    private List<Unit> EnemyTeam;
     private BattleSpace[,] battleSpaces = new BattleSpace[9,3];  //[row, col]
-    public BattleSpacesController()
+    public BattleSpacesController(List<Unit> playerTeam, List<Unit> enemyTeam)
     {
+        PlayerTeam = playerTeam;
+        EnemyTeam = enemyTeam;
         CreateBattleSpaces();
     }
 
@@ -109,6 +112,38 @@ public class BattleSpacesController
         return targets;
     }
 
+    public ResultTargetting GetTargets(Ability ability)
+    {
+        BattleSpace castFrom = GetSpaceOf(ability.OwningUnit);
+        ResultTargetting result = new ResultTargetting(ability, castFrom);
+        
+        List<Unit> targetOptions; 
+        Team t = TargetConversion(ability.OwningUnit, ability.targets);
+        if (t == Team.player) targetOptions = PlayerTeam;
+        else targetOptions = EnemyTeam;                     //***TODO***Currently no way implimented to target terrain or nuetrals
+        
+        foreach (Unit target in targetOptions)
+        {
+            TargetData data = new TargetData();
+            data.targetType = target;
+            data.BattleSpace = GetSpaceOf(target);
+            data.rangeTo = CalculateDistance(castFrom.row, castFrom.col, data.BattleSpace.row, data.BattleSpace.col);
+            if (data.rangeTo <= ability.Range) data.inRange = true;
+            data.OthersAOE = GetTargetsInRange(data.BattleSpace.row, data.BattleSpace.col, ability.AOESize, t, false);
+            result.AddTargetData(data);
+        }
+        return result;
+    }
+    private Team TargetConversion(Unit unit, Team target)
+    {
+        if (unit.Team == Team.player) return target;
+        if (unit.Team == Team.enemy)
+        {
+            if (target == Team.enemy) return Team.player;
+            if (target == Team.player) return Team.enemy;
+        }
+        return target;
+    }
 
     public int CalculateDistance(int row1, int col1, int row2, int col2)
     {

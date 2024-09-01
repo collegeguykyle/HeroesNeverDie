@@ -13,7 +13,7 @@ public class Battle
 
     private List<Unit> PlayerTeam;
     private List<Unit> EnemyTeam;
-    private BattleSpacesController SpaceController = new BattleSpacesController();
+    private BattleSpacesController SpaceController;
     private TurnOrder TurnOrder;
     private BattleReport BattleReport = new BattleReport();
     private Reactions Reactions = new Reactions();
@@ -25,6 +25,7 @@ public class Battle
     {
         PlayerTeam = playerTeam;
         EnemyTeam = enemyTeam;
+        SpaceController = new BattleSpacesController(playerTeam, enemyTeam);
         BattleReport.SetTeams(playerTeam, enemyTeam);
 
         SpaceController.PlaceEnemyTeam(EnemyTeam);
