@@ -1,9 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class ResultTargetting
+public class ResultTargetting : EventArgs
 {
     public IOccupyBattleSpace Caster;
     public BattleSpace CasterBattleSpace;

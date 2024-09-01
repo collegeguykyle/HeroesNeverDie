@@ -16,7 +16,7 @@ public class Battle
     private BattleSpacesController SpaceController;
     private TurnOrder TurnOrder;
     private BattleReport BattleReport = new BattleReport();
-    private Reactions Reactions = new Reactions();
+    public ReactionsManager Reactions { get; private set; } = new ReactionsManager();
     private Unit CurrentUnit;
     private bool BattleOver = false;
     private List<Engagement> Engagements = new List<Engagement>();
@@ -46,12 +46,12 @@ public class Battle
             CurrentUnit = TurnOrder.GetCurrentUnit();  //Turn Order advances to next unit in End Unit Turn step
             TakeUnitTurn();
         }
-        SendEndBattle();
+        Reactions.SendEndBattle();
     }
 
     private void TakeUnitTurn()
     {
-        SendStartUnitTurn(CurrentUnit); 
+        Reactions.SendStartUnitTurn(CurrentUnit); 
         CurrentUnit.RollDice(); //1: Unit rolls mana
         List<Tactic> Tactics = CurrentUnit.Tactics;
 
@@ -72,81 +72,40 @@ public class Battle
                     break;
                 }
             }
+            //resolve the stack!!
         } while (!passTurn);
 
         CurrentUnit.EndTurn();
-        SendEndUnitTurn(CurrentUnit);
-    }
-
-    private void rollAttack()
-    {
-
-    }
-
-#region Reaction Event Invokers
-
-    public void SendStartUnitTurn(Unit unit)
-    {
-        BattleReport.AddReport(new ReportStartTurn(unit));
-        Reactions.onStartOfTurn?.Invoke();
-    }
-
-    public void SendDieRolled(DieSide side) //reactions that modify dice rolls
-    {
-        //careful not to allow these changes to perminantly change the dice
-        Reactions.onDiceRoll?.Invoke();
-    }
-    public void SendRollResult(Mana rolledMana)
-    {
-        
-        Reactions.onRollResult?.Invoke();
-    }
-
-    private void SendUseAbility(Unit target, Ability ability)
-    {
-        Reactions.onTargeting?.Invoke();
-        //to hit roll, do damage, apply additional ability effects
-        Reactions.onHitResult?.Invoke();
-        Reactions.onAbilityComplete?.Invoke();
-    } 
-    
-    public void SendEndUnitTurn(Unit unit)
-    {
-        Reactions.onEndOfTurn?.Invoke();
+        Reactions.SendEndUnitTurn(CurrentUnit);
         TurnOrder.AdvanceToNextUnit();
     }
-    
-    private void SendEndBattle()
-    {
-        Reactions.onEndOfBattle?.Invoke();
-        BattleOver = true;
-        //[ ] push the log somewhere via an event broadcast
-    }
 
-    public void SendUnitDeath(Unit unit)
+    public bool TestBattleOver()
     {
-        if(unit.Team == Team.player)
-        {
-            bool allDead = true;
-            foreach (Unit u in PlayerTeam)
-            {
-                if (u.CurrentHP > 0) allDead = false;
-            }
-            if (allDead) SendEndBattle();
-        }
-        if (unit.Team == Team.enemy)
-        {
-            bool allDead = true;
-            foreach (Unit u in EnemyTeam)
-            {
-                if (u.CurrentHP > 0) allDead = false;
-            }
-            if (allDead) SendEndBattle();
-        }
-    }
- 
-#endregion
+        bool allDead = true;
 
+        foreach (Unit u in PlayerTeam)
+        {
+            if (u.CurrentHP > 0) allDead = false;
+        }
+        if (allDead) 
+        {
+            Reactions.SendEndBattle();
+            BattleOver = true;
+        }
+            
+        foreach (Unit u in EnemyTeam)
+        {
+            if (u.CurrentHP > 0) allDead = false;
+        }
+        if (allDead) 
+        { 
+            Reactions.SendEndBattle();
+            BattleOver = true;
+        }
+
+        return allDead;
+    }
 
 #region Engagements
     public void AddReaction(Reaction reaction)

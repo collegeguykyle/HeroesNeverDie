@@ -31,7 +31,7 @@ public class Unit : IOccupyBattleSpace
     public Mana ManaLost = new Mana();
 
     List<Dice> DiceList = new List<Dice>();
-    public List<Ability> Abilities = new List<Ability>();
+    public List<Ability> Abilities = new List<Ability>(); //Delete this? Only used in shop phase, which will have a seperate unit class
     public List<Tactic> Tactics = new List<Tactic>();
     public List<Reaction> Reactions = new List<Reaction>();
 
@@ -39,7 +39,7 @@ public class Unit : IOccupyBattleSpace
     public int StartingCol = 0;
     public int Init = 0;
 
-    public Battle Battle;
+    private Battle Battle;
 
     public Team Team { get; private set; }
 
@@ -62,7 +62,7 @@ public class Unit : IOccupyBattleSpace
         {
             int rand = Random.Range(0, dice.Sides.Count);
             DieSide side = dice.Sides[rand];
-            Battle.SendDieRolled(side);
+            Battle.Reactions.SendDieRolled(side);
             rolledSides.Add(side);
         }
         Mana rolled = new Mana();
@@ -70,25 +70,25 @@ public class Unit : IOccupyBattleSpace
         {
             rolled.AddMana(side.Mana);
         }
-        Battle.SendRollResult(rolled);
+        Battle.Reactions.SendRollResult(rolled);
         Mana.AddMana(rolled);
     }
 
     public int GetDodge()
     {
-        return AGL;
+        return AGL; //TODO: Return class that contains a full list of all buffs that add to this stat for logging
     }
     public int GetBlock()
     {
-        return PWR;
+        return PWR; //TODO: Return class that contains a full list of all buffs that add to this stat for logging
     }
     public int GetParry()
     {
-        return AGL;
+        return AGL; //TODO: Return class that contains a full list of all buffs that add to this stat for logging
     }
     public int GetAura()
     {
-        return ATN;
+        return ATN; //TODO: Return class that contains a full list of all buffs that add to this stat for logging
     }
 
 
