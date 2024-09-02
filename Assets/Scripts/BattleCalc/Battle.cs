@@ -15,7 +15,7 @@ public class Battle
     private List<Unit> EnemyTeam;
     private BattleSpacesController SpaceController;
     private TurnOrder TurnOrder;
-    private BattleReport BattleReport = new BattleReport();
+    public BattleReport BattleReport = new BattleReport();
     public ReactionsManager Reactions { get; private set; } = new ReactionsManager();
     private Unit CurrentUnit;
     private bool BattleOver = false;

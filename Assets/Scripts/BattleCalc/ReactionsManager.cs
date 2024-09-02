@@ -7,81 +7,30 @@ using System.Linq.Expressions;
 
 
 
-public class ReactionsManager
+public class ReactionsManager : IDisposable
 {
 
-    // each type of reaction is going to need a certain set of information to evaluate
-    // which means we probably need different delegate setups for most of these
+    // ***TODO: Create data classes and delegates for each event type as needed
 
-    public Action OnStartCombat;
-    public Action onStartOfTurn;
-    public Action onDiceRoll;
-    public Action onRollResult;
-    public Action onTargeting;
-    public Action onHitResult;
-    public Action onAbilityComplete;
-    public Action onEndOfTurn;
-    public Action onEndOfBattle;
-    public Action onUnitDeath;
+    public event EventHandler<Unit> onStartOfTurn;
+    public event EventHandler<DieSide> onDiceRoll;
+    public event EventHandler<ResultRoll> onRollResult;
+    public event EventHandler<ResultTargetting> onTargeting;
+    public event EventHandler<ResultAttack> onHitResult;
+    public event EventHandler<ResultAbility> onAbilityComplete;
+    public event EventHandler<Unit> onEndOfTurn;
+    public event EventHandler onEndOfBattle;
+    public event EventHandler<Unit> onUnitDeath;
 
-    public void AddReaction(Reaction reaction)
-    {
-        switch (reaction.ReactionType)
-        {
-            case BattleReaction.StartOfTurn:
-                onStartOfTurn += reaction.DoReaction; break;
-            case BattleReaction.DiceRoll:
-                onDiceRoll += reaction.DoReaction; break;
-            case BattleReaction.RollResult:
-                onRollResult += reaction.DoReaction; break;
-            case BattleReaction.Targeting:
-                onTargeting += reaction.DoReaction; break;
-            case BattleReaction.HitResult:
-                onHitResult += reaction.DoReaction; break;
-            case BattleReaction.AbilityComplete:
-                onAbilityComplete += reaction.DoReaction; break;
-            case BattleReaction.EndOfTurn:
-                onEndOfTurn += reaction.DoReaction; break;
-            case BattleReaction.EndOfBattle:
-                onEndOfBattle += reaction.DoReaction; break;
-            case BattleReaction.UnitDeath:
-                onUnitDeath += reaction.DoReaction; break;
-        }
-    }
-
-    public void RemoveReaction(Reaction reaction)
-    {
-        switch (reaction.ReactionType)
-        {
-            case BattleReaction.StartOfTurn:
-                onStartOfTurn -= reaction.DoReaction; break;
-            case BattleReaction.DiceRoll:
-                onDiceRoll -= reaction.DoReaction; break;
-            case BattleReaction.RollResult:
-                onRollResult -= reaction.DoReaction; break;
-            case BattleReaction.Targeting:
-                onTargeting -= reaction.DoReaction; break;
-            case BattleReaction.HitResult:
-                onHitResult -= reaction.DoReaction; break;
-            case BattleReaction.AbilityComplete:
-                onAbilityComplete -= reaction.DoReaction; break;
-            case BattleReaction.EndOfTurn:
-                onEndOfTurn -= reaction.DoReaction; break;
-            case BattleReaction.EndOfBattle:
-                onEndOfTurn -= reaction.DoReaction; break;
-            case BattleReaction.UnitDeath:
-                onUnitDeath -= reaction.DoReaction; break;
-        }
-    }
 
     public void SendStartUnitTurn(Unit unit)
     {
         //BattleReport.AddReport(new ReportStartTurn(unit));
         if (onStartOfTurn != null)
         {
-            foreach (Action handler in onStartOfTurn.GetInvocationList())
+            foreach (EventHandler<Unit> handler in onStartOfTurn.GetInvocationList())
             {
-                try { handler(); }
+                try { handler(this, unit); }
                 catch (Exception ex) { Debug.Log($"Start of Turn Event Exception:  " + ex.Message); }
             }
         }
@@ -93,22 +42,23 @@ public class ReactionsManager
         //careful not to allow these changes to perminantly change the dice
         if (onDiceRoll != null)
         {
-            foreach (Action handler in onDiceRoll.GetInvocationList())
+            DieSide clone = new DieSide(side); //create a copy of the dieSide so all modifications to the result are temporary
+            foreach (EventHandler<DieSide> handler in onDiceRoll.GetInvocationList())
             {
-                try { handler(); }
+                try { handler(this, clone); }
                 catch (Exception ex) { Debug.Log($"Dice Rolled Event Exception:  " + ex.Message); }
             }
         }
 
     }
 
-    public void SendRollResult(Mana rolledMana) //reactions that occur based on the final outcome of a unit's dice roll
+    public void SendRollResult(ResultRoll roll) //reactions that occur based on the final outcome of a unit's dice roll
     {
         if (onRollResult != null)
         {
-            foreach (Action handler in onRollResult.GetInvocationList())
+            foreach (EventHandler<ResultRoll> handler in onRollResult.GetInvocationList())
             {
-                try { handler(); }
+                try { handler(this, roll); }
                 catch (Exception ex) { Debug.Log($"Dice Roll Result Event Exception:  " + ex.Message); }
             }
         }
@@ -119,9 +69,9 @@ public class ReactionsManager
     {
         if (onTargeting != null)
         {
-            foreach (Action handler in onTargeting.GetInvocationList())
+            foreach (EventHandler<ResultTargetting> handler in onTargeting.GetInvocationList())
             {
-                try { handler(); }
+                try { handler(this, result); }
                 catch (Exception ex) { Debug.Log($"Targeting Event Exception:  " + ex.Message); }
             }
         }
@@ -131,9 +81,9 @@ public class ReactionsManager
     {
         if (onHitResult != null)
         {
-            foreach (Action handler in onHitResult.GetInvocationList())
+            foreach (EventHandler<ResultAttack> handler in onHitResult.GetInvocationList())
             {
-                try { handler(); }
+                try { handler(this, result); }
                 catch (Exception ex) { Debug.Log($"Hit Result Event Exception:  " + ex.Message); }
             }
         }
@@ -143,9 +93,9 @@ public class ReactionsManager
     {
         if (onAbilityComplete != null)
         {
-            foreach (Action handler in onAbilityComplete.GetInvocationList())
+            foreach (EventHandler<Ability> handler in onAbilityComplete.GetInvocationList())
             {
-                try { handler(); }
+                try { handler(this, ability); }
                 catch (Exception ex) { Debug.Log($"Ability Complete Event Exception:  " + ex.Message); }
             }
         }
@@ -155,9 +105,9 @@ public class ReactionsManager
     {
         if (onEndOfTurn != null)
         {
-            foreach (Action handler in onEndOfTurn.GetInvocationList())
+            foreach (EventHandler<Unit> handler in onEndOfTurn.GetInvocationList())
             {
-                try { handler(); }
+                try { handler(this, unit); }
                 catch (Exception ex) { Debug.Log($"On End of Turn Event Exception:  " + ex.Message); }
             }
         }
@@ -174,22 +124,34 @@ public class ReactionsManager
                 catch (Exception ex) { Debug.Log($"End of Battle Event Exception:  " + ex.Message); }
             }
         }
-        
         //[ ] push the Battle Report somewhere via an event broadcast?
+
+        Dispose();
     }
 
     public void SendUnitDeath(Unit unit)
     {
         if (onUnitDeath != null)
         {
-            foreach (Action handler in onUnitDeath.GetInvocationList())
+            foreach (EventHandler<Unit> handler in onUnitDeath.GetInvocationList())
             {
-                try { handler(); }
+                try { handler(this, unit); }
                 catch (Exception ex) { Debug.Log($"Unit Death Event Exception:  " + ex.Message); }
             }
         }
-
+        
     }
 
-
+    public void Dispose() //unsubscribe all events to prevent memory leaks
+    {
+        onStartOfTurn = null;
+        onDiceRoll = null;
+        onRollResult = null;
+        onTargeting = null;
+        onHitResult = null;
+        onAbilityComplete = null;
+        onEndOfTurn = null;
+        onEndOfBattle = null;
+        onUnitDeath = null;
+    }
 }

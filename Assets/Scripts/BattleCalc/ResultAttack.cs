@@ -1,9 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class ResultAttack
+public class ResultAttack : EventArgs
 {
 
     public List<ResultTargetAttack> Targets = new List<ResultTargetAttack>();

@@ -1,10 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+
 
 
 public enum Team { player, enemy, neutral, terrain, other }
-public class Unit : IOccupyBattleSpace
+public class Unit : EventArgs, IOccupyBattleSpace
 {
     public string Name = "Hero Name";
 
@@ -60,7 +61,7 @@ public class Unit : IOccupyBattleSpace
         //for each dice in the dice list, roll it and add its mana to the mana pool
         foreach(Dice dice in DiceList)
         {
-            int rand = Random.Range(0, dice.Sides.Count);
+            int rand = UnityEngine.Random.Range(0, dice.Sides.Count);
             DieSide side = dice.Sides[rand];
             Battle.Reactions.SendDieRolled(side);
             rolledSides.Add(side);

@@ -1,8 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DieSide
+public class DieSide : EventArgs
 {
     public string Name { get; protected set; } = "Blank";
     public Mana Mana { get; protected set; } = new Mana(); //Amount of mana you get if the side is rolled
