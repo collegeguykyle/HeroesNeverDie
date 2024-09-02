@@ -5,7 +5,6 @@ using UnityEngine;
 public class Dice
 {
     public string Name { get; private set; } = "Blank Die";
-    public List<DieSides> DiceSides {  get; private set; } = new List<DieSides>();
     public List<DieSide> Sides { get; private set; } = new List<DieSide>();
 
     #region Basic Die Sides

@@ -40,7 +40,7 @@ public class Unit : EventArgs, IOccupyBattleSpace
     public int StartingCol = 0;
     public int Init = 0;
 
-    private Battle Battle;
+    public Battle Battle { get; protected set; }
 
     public Team Team { get; private set; }
 
@@ -49,30 +49,25 @@ public class Unit : EventArgs, IOccupyBattleSpace
         Battle = battle;
         foreach (Reaction r in Reactions)
         {
-            if (r.ReactionType == BattleReaction.StartOfCombat) r.DoReaction();
-            else battle.AddReaction(r);
+            if (r is ReactionStartBattle) (r as ReactionStartBattle).onEvent();
+            else r.Subscribe(battle);
         }
     }
 
 
     public void RollDice()
     {
-        List<DieSide> rolledSides = new List<DieSide>();
+        ResultRoll result = new ResultRoll(this);
         //for each dice in the dice list, roll it and add its mana to the mana pool
         foreach(Dice dice in DiceList)
         {
             int rand = UnityEngine.Random.Range(0, dice.Sides.Count);
             DieSide side = dice.Sides[rand];
-            Battle.Reactions.SendDieRolled(side);
-            rolledSides.Add(side);
+            result.rolledSides.Add(side);
         }
-        Mana rolled = new Mana();
-        foreach(DieSide side in rolledSides)
-        {
-            rolled.AddMana(side.Mana);
-        }
-        Battle.Reactions.SendRollResult(rolled);
-        Mana.AddMana(rolled);
+        Battle.Reactions.SendDieRolled(result); //reactions that modify the faces of the dice after they are rolled
+        Battle.Reactions.SendRollResult(result); //reactions that do things based on final roll result
+        Mana.AddMana(result.TotalMana());
     }
 
     public int GetDodge()
@@ -93,7 +88,7 @@ public class Unit : EventArgs, IOccupyBattleSpace
     }
 
 
-    public void EndTurn()
+    public void ClearMana()
     {
         //reset mana
         ManaLost = Mana; //stored mana lost for reference by certain end of turn reactions that need this information

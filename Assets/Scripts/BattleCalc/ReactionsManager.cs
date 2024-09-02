@@ -10,13 +10,11 @@ using System.Linq.Expressions;
 public class ReactionsManager : IDisposable
 {
 
-    // ***TODO: Create data classes and delegates for each event type as needed
-
     public event EventHandler<Unit> onStartOfTurn;
-    public event EventHandler<DieSide> onDiceRoll;
+    public event EventHandler<ResultRoll> onDiceRoll;
     public event EventHandler<ResultRoll> onRollResult;
     public event EventHandler<ResultTargetting> onTargeting;
-    public event EventHandler<ResultAttack> onHitResult;
+    public event EventHandler<ResultAttack> onAttackResult;
     public event EventHandler<ResultAbility> onAbilityComplete;
     public event EventHandler<Unit> onEndOfTurn;
     public event EventHandler onEndOfBattle;
@@ -37,15 +35,14 @@ public class ReactionsManager : IDisposable
    
     }
 
-    public void SendDieRolled(DieSide side) //reactions that modify dice rolls
+    public void SendDieRolled(ResultRoll result) //reactions that modify dice rolls
     {
         //careful not to allow these changes to perminantly change the dice
         if (onDiceRoll != null)
         {
-            DieSide clone = new DieSide(side); //create a copy of the dieSide so all modifications to the result are temporary
-            foreach (EventHandler<DieSide> handler in onDiceRoll.GetInvocationList())
+            foreach (EventHandler<ResultRoll> handler in onDiceRoll.GetInvocationList())
             {
-                try { handler(this, clone); }
+                try { handler(this, result); }
                 catch (Exception ex) { Debug.Log($"Dice Rolled Event Exception:  " + ex.Message); }
             }
         }
@@ -77,11 +74,11 @@ public class ReactionsManager : IDisposable
         }
     }
 
-    public void SendHitResult(ResultAttack result)
+    public void SendAttackResult(ResultAttack result)
     {
-        if (onHitResult != null)
+        if (onAttackResult != null)
         {
-            foreach (EventHandler<ResultAttack> handler in onHitResult.GetInvocationList())
+            foreach (EventHandler<ResultAttack> handler in onAttackResult.GetInvocationList())
             {
                 try { handler(this, result); }
                 catch (Exception ex) { Debug.Log($"Hit Result Event Exception:  " + ex.Message); }
@@ -89,11 +86,11 @@ public class ReactionsManager : IDisposable
         }
     }
 
-    public void SendAbilityComplete(Ability ability)
+    public void SendAbilityComplete(ResultAbility ability)
     {
         if (onAbilityComplete != null)
         {
-            foreach (EventHandler<Ability> handler in onAbilityComplete.GetInvocationList())
+            foreach (EventHandler<ResultAbility> handler in onAbilityComplete.GetInvocationList())
             {
                 try { handler(this, ability); }
                 catch (Exception ex) { Debug.Log($"Ability Complete Event Exception:  " + ex.Message); }
@@ -148,7 +145,7 @@ public class ReactionsManager : IDisposable
         onDiceRoll = null;
         onRollResult = null;
         onTargeting = null;
-        onHitResult = null;
+        onAttackResult = null;
         onAbilityComplete = null;
         onEndOfTurn = null;
         onEndOfBattle = null;

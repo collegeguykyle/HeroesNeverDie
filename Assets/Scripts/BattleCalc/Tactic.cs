@@ -46,6 +46,10 @@ public class Tactic
         //9.2: If no final selector condition, choose closest, then randomly --OR-- ability has prefered Selector if player does not input one
         if (TargettingData.SelectedTarget == null) TargettingData = TestTargetSelector(TCondition.Closest, TargettingData, map);
 
+        //10.1: If still no target selection then nothing to target, so return false, else broadcast target data to reactions
+        if (TargettingData.SelectedTarget == null) return false;
+        battleController.Reactions.SendTargetting(TargettingData);
+
         //*****10: Execute the ability against the chosen target*****
         Ability.ExecuteAbility(TargettingData);
         return true;
@@ -113,6 +117,7 @@ public class Tactic
 
     private bool TestTargetRequirements(TCondition condition, IOccupyBattleSpace target, BattleSpacesController map) //return true if conditions allow use, false if not
     {
+        if (target is Unit && (target as Unit).CurrentHP <= 0) return false;
         BattleSpace center;
         switch (condition)
         {
@@ -131,6 +136,7 @@ public class Tactic
                 if (map.GetTargetsInRange(center.row, center.col, Ability.Range, target.Team, false).Count >= 4) return true;
                 else return false;
         }
+        
         return true;
     }
 

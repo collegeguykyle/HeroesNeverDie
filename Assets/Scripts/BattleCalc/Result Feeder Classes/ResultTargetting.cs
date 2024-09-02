@@ -52,6 +52,11 @@ public class ResultTargetting : EventArgs
         }
     }
     
+    public Unit GetUnitTarget()  // I need to add logic to the tactic decision making to allow for targeting only units or terrain and update this work flow
+    {
+        return SelectedTarget.targetType as Unit;
+    }
+    
 }
 
 public class TargetData

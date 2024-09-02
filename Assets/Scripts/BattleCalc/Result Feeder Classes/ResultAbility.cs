@@ -7,7 +7,7 @@ public class ResultAbility : EventArgs
 {
     public Unit Caster;
     public Ability Ability;
-    public List<ResultAttack> AttackList;
+    public List<ResultAttack> AttackList = new List<ResultAttack>();
 
     public ResultAbility(Unit Caster, Ability Ability)
     {

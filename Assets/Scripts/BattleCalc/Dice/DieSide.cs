@@ -5,10 +5,15 @@ using UnityEngine;
 
 public class DieSide : EventArgs
 {
+    public Dice OwningDie;
     public string Name { get; protected set; } = "Blank";
     public Mana Mana { get; protected set; } = new Mana(); //Amount of mana you get if the side is rolled
 
-    // [ ] Should we have unique sprites for dice sides, or create a modular system??
+    public static void SetDiceSide(Dice dice, int side, DieSide type)
+    {
+        DieSide clone = new DieSide(type);
+        dice.Sides[side] = clone;
+    }
 
     //Dice Status Effects
     // bool pain = false; //When rolled take damage and remove this effect !!NOT IMPLIMENTED
@@ -67,6 +72,3 @@ public class DieSide : EventArgs
     #endregion
 
 }
-
-public enum DieSides { Melee1, Melee2, Shield1, Shield2, Ranged1, Ranged2, Magic1, Magic2 }
-//This enum must be in the EXACT same order as the Scriptable Object Side Prefab List

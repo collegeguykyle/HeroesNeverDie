@@ -11,13 +11,13 @@ public class Battle
     //As it calculates the fight, it records everything in a Battle Report, which is what is 
     //the player client uses to create a replay of the battle which they watch to see the results.
 
-    private List<Unit> PlayerTeam;
-    private List<Unit> EnemyTeam;
-    private BattleSpacesController SpaceController;
-    private TurnOrder TurnOrder;
+    public List<Unit> PlayerTeam { get; private set; }
+    public  List<Unit> EnemyTeam { get; private set; }
+    public BattleSpacesController SpaceController { get; private set; }
+    public TurnOrder TurnOrder { get; private set; }
     public BattleReport BattleReport = new BattleReport();
     public ReactionsManager Reactions { get; private set; } = new ReactionsManager();
-    private Unit CurrentUnit;
+    public Unit CurrentUnit { get; private set; }
     private bool BattleOver = false;
     private List<Engagement> Engagements = new List<Engagement>();
 
@@ -35,7 +35,7 @@ public class Battle
         foreach (Unit unit in enemyTeam) { unit.BattleStart(this); }
 
         TurnOrder = new TurnOrder(PlayerTeam, EnemyTeam);
-
+        Reactions.onUnitDeath += TestBattleOver;
         BattleLoop();
     }
 
@@ -46,7 +46,6 @@ public class Battle
             CurrentUnit = TurnOrder.GetCurrentUnit();  //Turn Order advances to next unit in End Unit Turn step
             TakeUnitTurn();
         }
-        Reactions.SendEndBattle();
     }
 
     private void TakeUnitTurn()
@@ -72,15 +71,15 @@ public class Battle
                     break;
                 }
             }
-            //resolve the stack!!
+
         } while (!passTurn);
 
-        CurrentUnit.EndTurn();
+        CurrentUnit.ClearMana();
         Reactions.SendEndUnitTurn(CurrentUnit);
         TurnOrder.AdvanceToNextUnit();
     }
 
-    public bool TestBattleOver()
+    public void TestBattleOver(object sender, Unit unit)
     {
         bool allDead = true;
 
@@ -104,18 +103,9 @@ public class Battle
             BattleOver = true;
         }
 
-        return allDead;
     }
 
 #region Engagements
-    public void AddReaction(Reaction reaction)
-    {
-        Reactions.AddReaction(reaction);
-    }
-    public void RemoveReaction(Reaction reaction)
-    {
-        Reactions.RemoveReaction(reaction);
-    }
 
     public void AddEngagement(Unit Attacker, Unit Victim)
     {

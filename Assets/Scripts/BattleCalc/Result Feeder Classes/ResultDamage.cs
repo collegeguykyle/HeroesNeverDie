@@ -7,7 +7,7 @@ using UnityEngine;
 public class ResultDamage
 {
 
-
+    public List<Damage> Damages;
 
     public static ResultDamage RollDamage(ResultHit attack)
     {

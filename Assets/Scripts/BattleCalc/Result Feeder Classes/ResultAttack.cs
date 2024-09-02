@@ -37,6 +37,8 @@ public class ResultAttack : EventArgs
             Targets.Add(target);
         }
     }
+
+    public ResultAttack() { }
 #endregion
 
 }

@@ -9,9 +9,9 @@ public class ResultTargetAttack
 {
     public ResultHit ResultHit;
     public ResultDamage ResultDamage;
-    public ResultStatus ResultStatus;
+    public ResultSave ResultStatus;
 
-    public ResultTargetAttack(ResultHit resultHit, ResultDamage resultDamage, ResultStatus resultStatus)
+    public ResultTargetAttack(ResultHit resultHit, ResultDamage resultDamage, ResultSave resultStatus)
     {
         ResultHit = resultHit;
         ResultDamage = resultDamage;
