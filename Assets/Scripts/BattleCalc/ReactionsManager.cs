@@ -2,13 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using static UnityEngine.Rendering.CoreUtils;
-using System.Linq.Expressions;
-
 
 
 public class ReactionsManager : IDisposable
 {
+    public Battle battle;
 
     public event EventHandler<Unit> onStartOfTurn;
     public event EventHandler<ResultRoll> onDiceRoll;
@@ -20,6 +18,10 @@ public class ReactionsManager : IDisposable
     public event EventHandler onEndOfBattle;
     public event EventHandler<Unit> onUnitDeath;
 
+    public ReactionsManager(Battle battle)
+    {
+        this.battle = battle;
+    }
 
     public void SendStartUnitTurn(Unit unit)
     {
@@ -76,6 +78,8 @@ public class ReactionsManager : IDisposable
 
     public void SendAttackResult(ResultAttack result)
     {
+        //FIREST: Send the attack to Battle? to apply the damage / status / move
+        //THEN let reactions react to what happened
         if (onAttackResult != null)
         {
             foreach (EventHandler<ResultAttack> handler in onAttackResult.GetInvocationList())
@@ -84,6 +88,7 @@ public class ReactionsManager : IDisposable
                 catch (Exception ex) { Debug.Log($"Hit Result Event Exception:  " + ex.Message); }
             }
         }
+        
     }
 
     public void SendAbilityComplete(ResultAbility ability)

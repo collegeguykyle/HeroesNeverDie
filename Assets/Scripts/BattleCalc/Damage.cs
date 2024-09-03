@@ -8,6 +8,7 @@ public class Damage
     public AttackType attackType;
     public int NumberDice;
     public int SizeDice;
+    public int DamageBonus;
     public List<int> RollResult = new List<int>();
 
     public Damage(string source, AttackType attackType, int numberDice, int sizeDice)

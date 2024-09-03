@@ -1,20 +1,26 @@
 //Ability interfaces for IHit, ITestSave, IDealDamage, IApplyStatus,  IMove
 
+using System.Collections.Generic;
+
 public interface IHit
 {
-    public int NumberOfAttacks { get; }
+    public abstract List<AttackType> GetAttackTypes { get; }
+    public abstract int NumberOfAttacks { get; }
+    public abstract List<ToHitBonus> ToHitBonus { get; }
+    public abstract int GetAttackBonus();
 }
 
 public interface ITestSave
 {
-
+    public List<MagicSkillBonus> MagicSkillBonus { get; }
+    public int GetMagicBonus();
 }
 
 public interface IDealDamage
 {
-    public Damage damage { get;  }
+    public abstract List<Damage> damageDice { get;  }
 
-    public abstract ResultDamage SendDamage(Damage damage);
+    public abstract ResultDamage SendDamage(List<Damage> damage);
 
 
 }

@@ -9,8 +9,29 @@ public class ResultAttack : EventArgs
 
     public List<ResultTargetAttack> Targets = new List<ResultTargetAttack>();
 
+    public void ExecuteAttack()
+    {
+        foreach (ResultTargetAttack attackTargetResult in Targets)
+        {
+            if (attackTargetResult.ResultHit != null && attackTargetResult.ResultHit.hit == true)
+            {
+                Unit target = attackTargetResult.ResultHit.Target;
+                if (attackTargetResult.ResultDamage != null)
+                    target.TakeDamage(attackTargetResult.ResultDamage.TotalDamage);
+            }
+            if (attackTargetResult.ResultSave != null)
+            {
+                //TODO: impliment code for checking if a save was successful or not, then applying the buff / debuff
+            }
+            //TODO: Add implimentation for moving the user of the ability or others hit by it
 
-#region Constructors
+        }
+
+        //Check to see if changes the battlefield in some way that affects pathfinding, etc
+    }
+
+
+    #region Constructors
     public ResultAttack(List<ResultTargetAttack> targets)
     {
         Targets = targets;
@@ -40,5 +61,8 @@ public class ResultAttack : EventArgs
 
     public ResultAttack() { }
 #endregion
+
+
+
 
 }

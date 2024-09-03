@@ -7,13 +7,11 @@ public abstract class Ability
 {
     public abstract string Name { get; protected set; }
     public abstract Mana cost { get; protected set; }
-    public abstract Unit OwningUnit { get; protected set; }
-    public abstract int Range { get; protected set; } // range 0 = movement ability
-    public abstract int AOESize { get; protected set; }
+    public abstract int Range { get; protected set; } 
     public abstract bool UseEngaged { get; protected set; }
     public abstract Team targets { get; protected set; }
-    public abstract List<AttackType> GetAttackTypes { get; protected set; }
-    public abstract int GetBonus { get; protected set; }
+
+    public Unit OwningUnit { get; protected set; }
 
     //TODO: How send Attack Result and Ability Complete result??
     //TODO: Ensure that send Unit Death is embedded in Attack Result
@@ -51,7 +49,7 @@ public abstract class Ability
 
             foreach (Unit target in targetList)
             {
-                ResultHit resultHit = ResultHit.TryHit(this, TargettingData.GetUnitTarget());
+                ResultHit resultHit = ResultHit.TryHit((this as IHit), TargettingData.GetUnitTarget());
                 
                 ResultDamage damageResult = new ResultDamage();
                 if (this is IDealDamage) damageResult = ResultDamage.RollDamage(resultHit);
@@ -71,10 +69,22 @@ public abstract class Ability
 
     public static List<Unit> GetAOETargets(ResultTargetting TargetingData, IAOE ability)
     {
-        List<Unit> result = new List<Unit>();
+        List<Unit> result = new List<Unit>(); //TODO: Add AOE targeting here based on type of AOE and AOErange
         return result;
     }
 
+}
+public class ToHitBonus
+{
+    String NameOfBonus;
+    String SourceOfBonus;
+    int value;
+}
+public class MagicSkillBonus
+{
+    String NameOfBonus;
+    String SourceOfBonus;
+    int value;
 }
 
 public enum AttackType { Ranged, Melee, Physical, Smashing, Slashing, Stabbing, 

@@ -20,4 +20,15 @@ public class ResultAbility : EventArgs
         this.Ability = Ability;
         this.AttackList = attacks;
     }
+    public ResultAbility(Unit Caster, Ability Ability, ResultAttack attack)
+    {
+        this.Caster = Caster;
+        this.Ability = Ability;
+        this.AttackList.Add(attack);
+    }
+
+    public void AddAttack(ResultAttack attack)
+    {
+        AttackList.Add(attack);
+    }
 }

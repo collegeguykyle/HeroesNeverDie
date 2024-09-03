@@ -25,11 +25,11 @@ public class ResultHit
         Target = target;
     }
 
-    public static ResultHit TryHit(Ability ability, Unit target)
+    public static ResultHit TryHit(IHit ability, Unit target)
     {
-        ResultHit result = new ResultHit(ability, target);
+        ResultHit result = new ResultHit((ability as Ability), target);
 
-        result.attackBonus = ability.GetBonus;
+        result.attackBonus = ability.GetAttackBonus();
 
         //Choose which defense value is the best against the attack
         int dodge = target.GetDodge();

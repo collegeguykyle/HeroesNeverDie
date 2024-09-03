@@ -87,6 +87,11 @@ public class Unit : EventArgs, IOccupyBattleSpace
         return ATN; //TODO: Return class that contains a full list of all buffs that add to this stat for logging
     }
 
+    public void TakeDamage(int damage)
+    {
+        CurrentHP -= damage;
+        if (CurrentHP <= 0) Battle.Reactions.SendUnitDeath(this);
+    }
 
     public void ClearMana()
     {

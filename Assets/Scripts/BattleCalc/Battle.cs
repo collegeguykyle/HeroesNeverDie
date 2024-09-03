@@ -16,28 +16,33 @@ public class Battle
     public BattleSpacesController SpaceController { get; private set; }
     public TurnOrder TurnOrder { get; private set; }
     public BattleReport BattleReport = new BattleReport();
-    public ReactionsManager Reactions { get; private set; } = new ReactionsManager();
+    public ReactionsManager Reactions { get; private set; } 
     public Unit CurrentUnit { get; private set; }
     private bool BattleOver = false;
     private List<Engagement> Engagements = new List<Engagement>();
 
     public Battle(List<Unit> playerTeam, List<Unit> enemyTeam)
     {
+        Reactions = new ReactionsManager(this);
+
         PlayerTeam = playerTeam;
         EnemyTeam = enemyTeam;
-        SpaceController = new BattleSpacesController(playerTeam, enemyTeam);
-        BattleReport.SetTeams(playerTeam, enemyTeam);
 
+        BattleReport.SetTeams(playerTeam, enemyTeam);
+        TurnOrder = new TurnOrder(PlayerTeam, EnemyTeam);
+
+        SpaceController = new BattleSpacesController(playerTeam, enemyTeam);
         SpaceController.PlaceEnemyTeam(EnemyTeam);
         SpaceController.PlacePlayerTeam(PlayerTeam);
         
         foreach (Unit unit in playerTeam) {unit.BattleStart(this); }
-        foreach (Unit unit in enemyTeam) { unit.BattleStart(this); }
+        foreach (Unit unit in enemyTeam) { unit.BattleStart(this); } 
 
-        TurnOrder = new TurnOrder(PlayerTeam, EnemyTeam);
         Reactions.onUnitDeath += TestBattleOver;
         BattleLoop();
     }
+
+#region Core Game Play Loop
 
     private void BattleLoop()
     {
@@ -101,9 +106,12 @@ public class Battle
         { 
             Reactions.SendEndBattle();
             BattleOver = true;
+            Reactions.Dispose();
         }
 
     }
+
+    #endregion
 
 #region Engagements
 
@@ -130,7 +138,30 @@ public class Battle
         return isEngaged;
     }
 
- #endregion
+    #endregion
+
+#region Executing Abilities
+
+    public void ExecuteAttackResult(ResultAttack attackResult)
+    {
+        //TODO:  I AM HERE
+        foreach(ResultTargetAttack attack in attackResult.Targets)
+        {
+            if (attack.ResultHit.hit)
+            {
+
+            }
+
+
+        }
+        //Do the damage, apply the buffs / debuffs, move things around
+        //Check to see if this killed anyone or changes the battlefield in some way that affects pathfinding, etc
+
+    }
+
+
+
+#endregion
 
 }
 

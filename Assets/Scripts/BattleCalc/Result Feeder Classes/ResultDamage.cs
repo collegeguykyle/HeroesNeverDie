@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class ResultDamage
 {
-
+    public int TotalDamage;
     public List<Damage> Damages;
 
     public static ResultDamage RollDamage(ResultHit attack)
@@ -42,6 +42,6 @@ public class ResultDamage
 
 //IF HIT: Check for damage reductions / immunities and thresholds
 //DAMAGE TYPES: 
-//      Physical: Smashing, Slashing, Stabbing
+//      Physical: Smashing, Slashing, Stabbing, Striking
 //      Elemental: Nature, Fire, Ice, Lightning
 //      Magical: Arcane, Holy, Shadow, Force
