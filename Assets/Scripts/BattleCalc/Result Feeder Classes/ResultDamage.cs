@@ -9,25 +9,29 @@ public class ResultDamage
     public int TotalDamage;
     public List<Damage> Damages;
 
-    public static ResultDamage RollDamage(ResultHit attack)
+    public static ResultDamage RollDamage(ResultHit attack, IDealDamage ability)
     {
         ResultDamage result = new ResultDamage();
 
-        //take in min and max damage
-
-        //roll the damage
-
-        //increase damage based on weaknesses / buffs
-
-        //mitigate the damage based on resistances / immunities
-
+        foreach (Damage damage in ability.damageDice)
+        {
+            Damage clone = Damage.Clone(damage);
+            result.Damages.Add(clone);
+            clone.RollDamage();
+            clone.ModifyDamage(attack);
+            result.TotalDamage += clone.totalDamage;
+        }
         return result;
     }
 
 
+}
 
+public interface IDealDamage
+{
+    public abstract List<Damage> damageDice { get; }
 
-
+    public abstract ResultDamage SendDamage(List<Damage> damage);
 
 
 }

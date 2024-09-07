@@ -61,6 +61,14 @@ public class ResultHit
     }
 }
 
+public interface IHit
+{
+    public abstract List<AttackType> GetAttackTypes { get; }
+    public abstract int NumberOfAttacks { get; }
+    public abstract List<ToHitBonus> ToHitBonus { get; }
+    public abstract int GetAttackBonus();
+}
+
 // TO HIT: attack bonus: each ability has multipliers tied to base stats, total up for attack bonus
 // DEFENSE: Best option of:
 //      Dodge = melee and ranged, phys and magic

@@ -56,7 +56,7 @@ public class Battle
     private void TakeUnitTurn()
     {
         Reactions.SendStartUnitTurn(CurrentUnit); 
-        CurrentUnit.RollDice(); //1: Unit rolls mana
+        CurrentUnit.RollManaDice(); //1: Unit rolls mana
         List<Tactic> Tactics = CurrentUnit.Tactics;
 
         //2: itterate through unit's tactics in order of priority until we find one that can be used, and use it
@@ -144,18 +144,8 @@ public class Battle
 
     public void ExecuteAttackResult(ResultAttack attackResult)
     {
-        //TODO:  I AM HERE
-        foreach(ResultTargetAttack attack in attackResult.Targets)
-        {
-            if (attack.ResultHit.hit)
-            {
-
-            }
-
-
-        }
-        //Do the damage, apply the buffs / debuffs, move things around
-        //Check to see if this killed anyone or changes the battlefield in some way that affects pathfinding, etc
+        //TODO:  I AM HERE.....  OR THERE  -------->
+        
 
     }
 

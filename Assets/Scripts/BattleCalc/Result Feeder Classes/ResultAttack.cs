@@ -19,6 +19,7 @@ public class ResultAttack : EventArgs
                 if (attackTargetResult.ResultDamage != null)
                     target.TakeDamage(attackTargetResult.ResultDamage.TotalDamage);
             }
+            //if an attack is BOTH IHit and ISave then the save is conditional on the hit
             if (attackTargetResult.ResultSave != null)
             {
                 //TODO: impliment code for checking if a save was successful or not, then applying the buff / debuff
@@ -62,7 +63,17 @@ public class ResultAttack : EventArgs
     public ResultAttack() { }
 #endregion
 
-
+    //consider: What if I want an ability to do X damage on hit, then if fail a save take additional damage?
+    //this shows how abilities need to own execution with aid from interfaces, results stored in result containers
 
 
 }
+
+public interface IAOE
+{
+    public int MaxTargets { get; }
+    public int AOESize { get; }
+    public int AOERange { get; }
+    public AOEShape AOEShape { get; }
+}
+public enum AOEShape { Circle, Line, Cone }

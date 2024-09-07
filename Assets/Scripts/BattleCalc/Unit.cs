@@ -55,7 +55,7 @@ public class Unit : EventArgs, IOccupyBattleSpace
     }
 
 
-    public void RollDice()
+    public void RollManaDice()
     {
         ResultRoll result = new ResultRoll(this);
         //for each dice in the dice list, roll it and add its mana to the mana pool

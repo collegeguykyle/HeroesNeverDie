@@ -11,3 +11,9 @@ public class ResultSave
 
 
 }
+
+public interface ITestSave
+{
+    public List<MagicSkillBonus> MagicSkillBonus { get; }
+    public int GetMagicBonus();
+}

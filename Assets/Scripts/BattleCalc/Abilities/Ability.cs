@@ -52,7 +52,7 @@ public abstract class Ability
                 ResultHit resultHit = ResultHit.TryHit((this as IHit), TargettingData.GetUnitTarget());
                 
                 ResultDamage damageResult = new ResultDamage();
-                if (this is IDealDamage) damageResult = ResultDamage.RollDamage(resultHit);
+                if (this is IDealDamage) damageResult = ResultDamage.RollDamage(resultHit, (this as IDealDamage));
                 
                 ResultSave saveResult = new ResultSave();
                 if (this is IApplyStatus) saveResult = new ResultSave(); //***TODO: update after impliment this container logic
