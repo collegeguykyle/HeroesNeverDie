@@ -7,7 +7,7 @@ using UnityEngine;
 public class ResultDamage
 {
     public int TotalDamage;
-    public List<Damage> Damages;
+    public List<Damage> DamageRolls;
 
     public static ResultDamage RollDamage(ResultHit attack, IDealDamage ability)
     {
@@ -16,7 +16,7 @@ public class ResultDamage
         foreach (Damage damage in ability.damageDice)
         {
             Damage clone = Damage.Clone(damage);
-            result.Damages.Add(clone);
+            result.DamageRolls.Add(clone);
             clone.RollDamage();
             clone.ModifyDamage(attack);
             result.TotalDamage += clone.totalDamage;
@@ -24,15 +24,28 @@ public class ResultDamage
         return result;
     }
 
+#region Constructors
+
+    public ResultDamage(ResultHit attack, IDealDamage ability)
+    {
+        foreach (Damage damage in ability.damageDice)
+        {
+            Damage clone = Damage.Clone(damage);
+            DamageRolls.Add(clone);
+            clone.RollDamage();
+            clone.ModifyDamage(attack);
+            TotalDamage += clone.totalDamage;
+        }
+    }
+    public ResultDamage() { }
+
+#endregion
 
 }
 
 public interface IDealDamage
 {
     public abstract List<Damage> damageDice { get; }
-
-    public abstract ResultDamage SendDamage(List<Damage> damage);
-
 
 }
 

@@ -45,7 +45,7 @@ public abstract class Ability
 
         for (int i = 0; i < (this as IHit).NumberOfAttacks; i++) 
         {
-            ResultAttack attackResult = new ResultAttack();
+            ResultSingleTarget attackResult = new ResultSingleTarget();
 
             foreach (Unit target in targetList)
             {
@@ -57,7 +57,7 @@ public abstract class Ability
                 ResultSave saveResult = new ResultSave();
                 if (this is IApplyStatus) saveResult = new ResultSave(); //***TODO: update after impliment this container logic
 
-                ResultTargetAttack targetAttack = new ResultTargetAttack(resultHit, damageResult, saveResult);
+                ResultAOEAction targetAttack = new ResultAOEAction(resultHit, damageResult, saveResult);
                 attackResult.Targets.Add(targetAttack);
             }
             OwningUnit.Battle.Reactions.SendAttackResult(attackResult);

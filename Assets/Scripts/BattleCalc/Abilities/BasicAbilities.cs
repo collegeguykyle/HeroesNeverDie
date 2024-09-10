@@ -31,11 +31,16 @@ public class Melee1 : Ability, IHit, IDealDamage
     {
         //This ability only does one attack
         ResultHit resultHit = ResultHit.TryHit(this, TargettingData.GetUnitTarget());
-        ResultDamage damageResult = SendDamage(damageDice); // <------ What the fuck is this????
-
+        if (resultHit.success)
+        {
+            ResultDamage damageResult = new ResultDamage(resultHit, this);
+            ResultSingleTarget resultAttack = new ResultSingleTarget(new ResultAOEAction(resultHit, damageResult));
+        }
+        
+        
         //This attack does not apply a debuff so we will skip that step
 
-        ResultAttack resultAttack = new ResultAttack(new ResultTargetAttack(resultHit, damageResult));
+        //ResultTargetAttack is really only needed for an IAOE attack
         ResultAbility resultAbility = new ResultAbility(OwningUnit, this, resultAttack);
 
     }
@@ -45,9 +50,5 @@ public class Melee1 : Ability, IHit, IDealDamage
         throw new System.NotImplementedException();
     }
 
-    public ResultDamage SendDamage(List<Damage> damage)  // <------ What the fuck is this????
-    {
-        throw new System.NotImplementedException();
-    }
 }
 

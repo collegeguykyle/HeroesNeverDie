@@ -10,7 +10,7 @@ public class ResultHit
 
     public int roll = 0;
 
-    public bool hit = false;
+    public bool success = false;
     public bool crit = false;
     public bool critMiss = false;
     
@@ -54,7 +54,7 @@ public class ResultHit
         result.roll = Random.Range(1, 100);
         if (result.roll >= 99) result.crit = true;
         if (result.roll <= 2) result.critMiss = true;
-        if (result.crit || result.roll + result.attackBonus > BestDefense) result.hit = true;
+        if (result.crit || result.roll + result.attackBonus > BestDefense) result.success = true;
 
         return result;
 

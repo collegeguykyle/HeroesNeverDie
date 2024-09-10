@@ -138,7 +138,7 @@ public abstract class ReactionAttackResult : Reaction
         battle.Reactions.onAttackResult += onEvent;
     }
 
-    public abstract void onEvent(object sender, ResultAttack result);
+    public abstract void onEvent(object sender, ResultSingleTarget result);
 
     public override void Unsubscribe()
     {

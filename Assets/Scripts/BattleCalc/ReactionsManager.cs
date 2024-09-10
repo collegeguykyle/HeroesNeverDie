@@ -12,7 +12,7 @@ public class ReactionsManager : IDisposable
     public event EventHandler<ResultRoll> onDiceRoll;
     public event EventHandler<ResultRoll> onRollResult;
     public event EventHandler<ResultTargetting> onTargeting;
-    public event EventHandler<ResultAttack> onAttackResult;
+    public event EventHandler<ResultSingleTarget> onAttackResult;
     public event EventHandler<ResultAbility> onAbilityComplete;
     public event EventHandler<Unit> onEndOfTurn;
     public event EventHandler onEndOfBattle;
@@ -76,13 +76,13 @@ public class ReactionsManager : IDisposable
         }
     }
 
-    public void SendAttackResult(ResultAttack result)
+    public void SendAttackResult(ResultSingleTarget result)
     {
         //FIREST: Send the attack to Battle? to apply the damage / status / move
         //THEN let reactions react to what happened
         if (onAttackResult != null)
         {
-            foreach (EventHandler<ResultAttack> handler in onAttackResult.GetInvocationList())
+            foreach (EventHandler<ResultSingleTarget> handler in onAttackResult.GetInvocationList())
             {
                 try { handler(this, result); }
                 catch (Exception ex) { Debug.Log($"Hit Result Event Exception:  " + ex.Message); }

@@ -142,7 +142,7 @@ public class Battle
 
 #region Executing Abilities
 
-    public void ExecuteAttackResult(ResultAttack attackResult)
+    public void ExecuteAttackResult(ResultSingleTarget attackResult)
     {
         //TODO:  I AM HERE.....  OR THERE  -------->
         

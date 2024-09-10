@@ -4,16 +4,18 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class ResultAttack : EventArgs
+public class ResultSingleTarget : ResultAction
 {
 
-    public List<ResultTargetAttack> Targets = new List<ResultTargetAttack>();
+    public List<ResultAOEAction> Targets = new List<ResultAOEAction>();
 
+    //TODO: This method needs to die and become smaller helper methods
+    //to make it easier for individual abilities to do common tasks
     public void ExecuteAttack()
     {
-        foreach (ResultTargetAttack attackTargetResult in Targets)
+        foreach (ResultAOEAction attackTargetResult in Targets)
         {
-            if (attackTargetResult.ResultHit != null && attackTargetResult.ResultHit.hit == true)
+            if (attackTargetResult.ResultHit != null && attackTargetResult.ResultHit.success == true)
             {
                 Unit target = attackTargetResult.ResultHit.Target;
                 if (attackTargetResult.ResultDamage != null)
@@ -31,36 +33,37 @@ public class ResultAttack : EventArgs
         //Check to see if changes the battlefield in some way that affects pathfinding, etc
     }
 
+    
 
     #region Constructors
-    public ResultAttack(List<ResultTargetAttack> targets)
+    public ResultSingleTarget(List<ResultAOEAction> targets)
     {
         Targets = targets;
     }
-    public ResultAttack(ResultTargetAttack target)
+    public ResultSingleTarget(ResultAOEAction target)
     {
         Targets.Add(target);
     }
-    public ResultAttack(ResultTargetAttack target1, ResultTargetAttack target2)
+    public ResultSingleTarget(ResultAOEAction target1, ResultAOEAction target2)
     {
         Targets[0] = target1;
         Targets[1] = target2;
     }
-    public ResultAttack(ResultTargetAttack target1, ResultTargetAttack target2, ResultTargetAttack target3)
+    public ResultSingleTarget(ResultAOEAction target1, ResultAOEAction target2, ResultAOEAction target3)
     {
         Targets[0] = target1;
         Targets[1] = target2;
         Targets[2] = target3;
     }
-    public ResultAttack(ResultTargetAttack[] targets)
+    public ResultSingleTarget(ResultAOEAction[] targets)
     {
-        foreach (ResultTargetAttack target in targets)
+        foreach (ResultAOEAction target in targets)
         {
             Targets.Add(target);
         }
     }
 
-    public ResultAttack() { }
+    public ResultSingleTarget() { }
 #endregion
 
     //consider: What if I want an ability to do X damage on hit, then if fail a save take additional damage?
@@ -69,11 +72,4 @@ public class ResultAttack : EventArgs
 
 }
 
-public interface IAOE
-{
-    public int MaxTargets { get; }
-    public int AOESize { get; }
-    public int AOERange { get; }
-    public AOEShape AOEShape { get; }
-}
-public enum AOEShape { Circle, Line, Cone }
+
