@@ -1,9 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class ResultHit
+public class ResultHit : ActionResult
 {
     public Ability Ability;
     public Unit Target;
@@ -37,10 +38,10 @@ public class ResultHit
         int parry = target.GetParry();
         int aura = target.GetAura();
 
-        if (ability.GetAttackTypes.Contains(AttackType.Ranged)) { parry = 0; }
-        if (!ability.GetAttackTypes.Contains(AttackType.Physical)) { parry = 0; }
-        if (ability.GetAttackTypes.Contains(AttackType.Melee)) { aura = 0; }
-        if (!ability.GetAttackTypes.Contains(AttackType.Magic)) { aura = 0; }
+        if (ability.GetAttackRange == AttackRange.Ranged) { parry = 0; }
+        if (ability.GetAttackType == AttackType.Magical) { parry = 0; }
+        if (ability.GetAttackRange == AttackRange.Melee) { aura = 0; }
+        if (ability.GetAttackType == AttackType.Physical) { aura = 0; }
 
         List<int> defenses = new List<int> { parry, dodge, block, aura };
         defenses = defenses.OrderByDescending(x => x).ToList();
@@ -51,7 +52,7 @@ public class ResultHit
         else if (BestDefense == parry) result.defenseType = DefenseType.Parry;
         else if (BestDefense == aura) result.defenseType = DefenseType.Aura;
 
-        result.roll = Random.Range(1, 100);
+        result.roll = UnityEngine.Random.Range(1, 100);
         if (result.roll >= 99) result.crit = true;
         if (result.roll <= 2) result.critMiss = true;
         if (result.crit || result.roll + result.attackBonus > BestDefense) result.success = true;
@@ -63,11 +64,23 @@ public class ResultHit
 
 public interface IHit
 {
-    public abstract List<AttackType> GetAttackTypes { get; }
-    public abstract int NumberOfAttacks { get; }
+    public abstract AttackType GetAttackType { get; }
+    public abstract AttackRange GetAttackRange { get; }
     public abstract List<ToHitBonus> ToHitBonus { get; }
     public abstract int GetAttackBonus();
 }
+
+public class ToHitBonus
+{
+    String NameOfBonus;
+    String SourceOfBonus;
+    int value;
+}
+
+public enum AttackType { Physical, Magical }
+public enum AttackRange { Melee, Ranged }
+
+public enum DefenseType { Dodge, Block, Parry, Aura }
 
 // TO HIT: attack bonus: each ability has multipliers tied to base stats, total up for attack bonus
 // DEFENSE: Best option of:

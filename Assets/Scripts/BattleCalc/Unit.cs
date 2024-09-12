@@ -32,9 +32,8 @@ public class Unit : EventArgs, IOccupyBattleSpace
     public Mana ManaLost = new Mana();
 
     List<Dice> DiceList = new List<Dice>();
-    public List<Ability> Abilities = new List<Ability>(); //Delete this? Only used in shop phase, which will have a seperate unit class
     public List<Tactic> Tactics = new List<Tactic>();
-    public List<Reaction> Reactions = new List<Reaction>();
+    public List<Reaction> Reactions { get; } = new List<Reaction>();
 
     public int StartingRow = 0;
     public int StartingCol = 0;
@@ -57,7 +56,7 @@ public class Unit : EventArgs, IOccupyBattleSpace
 
     public void RollManaDice()
     {
-        ResultRoll result = new ResultRoll(this);
+        ResultRollMana result = new ResultRollMana(this);
         //for each dice in the dice list, roll it and add its mana to the mana pool
         foreach(Dice dice in DiceList)
         {
@@ -65,7 +64,7 @@ public class Unit : EventArgs, IOccupyBattleSpace
             DieSide side = dice.Sides[rand];
             result.rolledSides.Add(side);
         }
-        Battle.Reactions.SendDieRolled(result); //reactions that modify the faces of the dice after they are rolled
+        Battle.Reactions.SendManaDieRolled(result); //reactions that modify the faces of the dice after they are rolled
         Battle.Reactions.SendRollResult(result); //reactions that do things based on final roll result
         Mana.AddMana(result.TotalMana());
     }

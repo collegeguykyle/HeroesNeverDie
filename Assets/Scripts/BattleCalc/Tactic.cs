@@ -48,7 +48,7 @@ public class Tactic
 
         //10.1: If still no target selection then nothing to target, so return false, else broadcast target data to reactions
         if (TargettingData.SelectedTarget == null) return false;
-        battleController.Reactions.SendTargetting(TargettingData);
+        battleController.Reactions.SendTargeting(TargettingData);
 
         //*****10: Execute the ability against the chosen target*****
         Ability.ExecuteAbility(TargettingData);

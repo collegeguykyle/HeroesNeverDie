@@ -115,7 +115,7 @@ public class BattleSpacesController
     public ResultTargetting GetTargets(Ability ability)
     {
         BattleSpace castFrom = GetSpaceOf(ability.OwningUnit);
-        ResultTargetting result = new ResultTargetting(ability, castFrom);
+        ResultTargetting result = new ResultTargetting(ability, castFrom, this);
         
         List<Unit> targetOptions; 
         Team t = TargetConversion(ability.OwningUnit, ability.targets);
@@ -129,7 +129,6 @@ public class BattleSpacesController
             data.BattleSpace = GetSpaceOf(target);
             data.rangeTo = CalculateDistance(castFrom.row, castFrom.col, data.BattleSpace.row, data.BattleSpace.col);
             if (data.rangeTo <= ability.Range) data.inRange = true;
-            data.OthersAOE = GetTargetsInRange(data.BattleSpace.row, data.BattleSpace.col, ability.AOESize, t, false);
             result.AddTargetData(data);
         }
         return result;

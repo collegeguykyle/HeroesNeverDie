@@ -7,28 +7,33 @@ public class ResultAbility : EventArgs
 {
     public Unit Caster;
     public Ability Ability;
-    public List<ResultSingleTarget> AttackList = new List<ResultSingleTarget>();
+    public List<Action> ActionList = new List<Action>();
 
+
+
+    #region constructors
     public ResultAbility(Unit Caster, Ability Ability)
     {
         this.Caster = Caster;
         this.Ability = Ability;
     }
-    public ResultAbility(Unit Caster, Ability Ability, List<ResultSingleTarget> attacks)
+    public ResultAbility(Unit Caster, Ability Ability, List<Action> actions)
     {
         this.Caster = Caster;
         this.Ability = Ability;
-        this.AttackList = attacks;
+        this.ActionList = actions;
     }
-    public ResultAbility(Unit Caster, Ability Ability, ResultSingleTarget attack)
+    public ResultAbility(Unit Caster, Ability Ability, Action action)
     {
         this.Caster = Caster;
         this.Ability = Ability;
-        this.AttackList.Add(attack);
+        this.ActionList.Add(action);
     }
 
-    public void AddAttack(ResultSingleTarget attack)
+    #endregion
+
+    public void AddAction(Action attack)
     {
-        AttackList.Add(attack);
+        ActionList.Add(attack);
     }
 }

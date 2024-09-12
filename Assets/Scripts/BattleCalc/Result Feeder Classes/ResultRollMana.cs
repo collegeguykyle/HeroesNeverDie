@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public class ResultRoll : EventArgs
+public class ResultRollMana : EventArgs
 {
     public Unit owner;
     public List<DieSide> rolledSides = new List<DieSide>();
@@ -18,7 +18,7 @@ public class ResultRoll : EventArgs
         }
         return rolled;
     }
-    public ResultRoll(Unit Owner)
+    public ResultRollMana(Unit Owner)
     {
         this.owner = Owner;
     }

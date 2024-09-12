@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 
 
-public class ResultDamage
+public class ResultDamage : ActionResult
 {
     public int TotalDamage;
     public List<Damage> DamageRolls;
@@ -17,14 +17,28 @@ public class ResultDamage
         {
             Damage clone = Damage.Clone(damage);
             result.DamageRolls.Add(clone);
-            clone.RollDamage();
-            clone.ModifyDamage(attack);
+            clone.RollDamage(attack);
+            result.TotalDamage += clone.totalDamage;
+        }
+        return result;
+    }
+    public static ResultDamage RollDamage(ResultHit attack, List<Damage> damageDice)
+    {
+        ResultDamage result = new ResultDamage();
+
+        foreach (Damage damage in damageDice)
+        {
+            Damage clone = Damage.Clone(damage);
+            result.DamageRolls.Add(clone);
+            clone.RollDamage(attack);
             result.TotalDamage += clone.totalDamage;
         }
         return result;
     }
 
-#region Constructors
+
+
+    #region Constructors
 
     public ResultDamage(ResultHit attack, IDealDamage ability)
     {
@@ -32,10 +46,14 @@ public class ResultDamage
         {
             Damage clone = Damage.Clone(damage);
             DamageRolls.Add(clone);
-            clone.RollDamage();
-            clone.ModifyDamage(attack);
+            clone.RollDamage(attack);
             TotalDamage += clone.totalDamage;
         }
+    }
+    public ResultDamage(Damage damage)
+    {
+        DamageRolls.Add(damage);
+        TotalDamage = damage.totalDamage;
     }
     public ResultDamage() { }
 

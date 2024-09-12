@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class ResultTargetting : EventArgs
 {
+    public BattleSpacesController BattleSpacesController;
     public IOccupyBattleSpace Caster;
     public BattleSpace CasterBattleSpace;
     public Ability Ability;
@@ -13,11 +14,12 @@ public class ResultTargetting : EventArgs
     public List<TargetData> PriorityList = new List<TargetData>();
     public TargetData SelectedTarget {  get; private set; }
 
-    public ResultTargetting(Ability ability, BattleSpace space)
+    public ResultTargetting( Ability ability, BattleSpace space, BattleSpacesController battleSpacesController)
     {
         Ability = ability;
         Caster = Ability.OwningUnit;
         CasterBattleSpace = space;
+        BattleSpacesController = battleSpacesController;    
     }
 
     public void AddTargetData(TargetData targetData)

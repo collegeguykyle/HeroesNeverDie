@@ -5,10 +5,10 @@ using UnityEngine;
 
 public class Battle 
 {
-    //This class is the core of the game!!  It should be run on the server with results (Battle Report)
+    //This class runs the core battle loop!!  It should be run on the server with results (Battle Report)
     //return back to the player client.
     //It takes two teams as inputs and fully calculates the result of the fight progmatically.
-    //As it calculates the fight, it records everything in a Battle Report, which is what is 
+    //As it calculates the fight, it records everything in a Battle Report, which is what  
     //the player client uses to create a replay of the battle which they watch to see the results.
 
     public List<Unit> PlayerTeam { get; private set; }
@@ -38,7 +38,7 @@ public class Battle
         foreach (Unit unit in playerTeam) {unit.BattleStart(this); }
         foreach (Unit unit in enemyTeam) { unit.BattleStart(this); } 
 
-        Reactions.onUnitDeath += TestBattleOver;
+        Reactions.UnitDeath += TestBattleOver;
         BattleLoop();
     }
 
@@ -140,18 +140,6 @@ public class Battle
 
     #endregion
 
-#region Executing Abilities
-
-    public void ExecuteAttackResult(ResultSingleTarget attackResult)
-    {
-        //TODO:  I AM HERE.....  OR THERE  -------->
-        
-
-    }
-
-
-
-#endregion
 
 }
 

@@ -7,10 +7,11 @@ public class Damage
     //This class has a dual purpose.
     //Purpose ONE: Holding data on how much damage an ability does and of what type
     public string Source;
-    public AttackType attackType;
+    public DamageType damageType;
     public int NumberDice;
     public int SizeDice;
     public int DamageBonus;
+    public List<DamageModifier> DamageModifierList = new List<DamageModifier>();
     //Purpose TWO: Storing data in clones of the result of the damage rolled and modified for Logging
     public List<int> RollResult = new List<int>();
     public int totalDamage = 0;
@@ -18,12 +19,29 @@ public class Damage
     public bool damageResist = false;
     public bool damageVulnerable = false;
 
-    public Damage(string source, AttackType attackType, int numberDice, int sizeDice)
+    public Damage(string source, DamageType Type, int numberDice, int sizeDice)
     {
         Source = source;
-        this.attackType = attackType;
+        this.damageType = Type;
         NumberDice = numberDice;
         SizeDice = sizeDice;
+    }
+    public Damage(string source, DamageType Type, int numberDice, int sizeDice, int bonus)
+    {
+        Source = source;
+        this.damageType = Type;
+        NumberDice = numberDice;
+        SizeDice = sizeDice;
+        DamageBonus = bonus;
+    }
+    public Damage(string source, DamageType Type, int flatDamage)
+    {
+        Source = source;
+        this.damageType = Type;
+        NumberDice = 1;
+        SizeDice = flatDamage;
+        RollResult.Add(flatDamage);
+        totalDamage = flatDamage;
     }
 
     public int GetAverageDamage()
@@ -46,23 +64,47 @@ public class Damage
         totalDamage += DamageBonus;
         return totalDamage;
     }
-
-    public int ModifyDamage(ResultHit attack)
+    public int RollDamage(ResultHit attack)
     {
-        if (attack.crit)
+        RollResult.Clear();
+        for (int i = 0; i < NumberDice; i++)
+        {
+            int num = Random.Range(0, SizeDice);
+            RollResult.Add(num);
+            totalDamage += num;
+        }
+        if (attack != null && attack.crit)
         {
             totalDamage = totalDamage * 2;
             crit = true;
         }
-        //TODO: Add Modifications for buffs / debuffs / resistences etc for Units and check for them here to modify damage
-
+        totalDamage += DamageBonus;
         return totalDamage;
     }
 
     public static Damage Clone(Damage toClone)
     {
-        Damage clone = new Damage(toClone.Source, toClone.attackType, toClone.NumberDice, toClone.SizeDice);
+        Damage clone = new Damage(toClone.Source, toClone.damageType, toClone.NumberDice, toClone.SizeDice);
         return clone;
     }
 
+}
+
+public class DamageModifier
+{
+    int Amount;
+    Reaction Source;
+    public DamageModifier(int amount, Reaction source)
+    {
+        Amount = amount;
+        Source = source;
+    }
+
+}
+
+public enum DamageType
+{
+    Smashing, Slashing, Stabbing, Striking,
+    Elemental, Fire, Ice, Lightning, Nature,
+    Arcane, Holy, Shadow, Psychic
 }
