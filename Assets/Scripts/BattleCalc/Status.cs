@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Collections;
 
 
 public abstract class Status
@@ -8,125 +9,110 @@ public abstract class Status
     public abstract string Name { get; }
     public virtual int Stacks { get; protected set; } = 0;
     public IOccupyBattleSpace Owner { get; protected set; }
-    public abstract void SubscribeEvents(Battle battle);
-    public Battle BattleController { get; }
+    public Battle BattleController { get; protected set; }
     public Status (Battle battle, IOccupyBattleSpace owner)
     {
         BattleController = battle;
         Owner = owner;
-        SubscribeEvents(battle);
+        Subscribe(battle);
     }
     public void addStacks(int stacks)
     {
         Stacks += stacks;
     }
+
+    public void Subscribe(Battle battle)
+    {
+        Status status = this;
+        BattleController = battle;
+        if (status is IReactStartTurn) battle.Reactions.SubscribeStartUnitTurn((status as IReactStartTurn).onStartTurn);
+        if (status is IReactManaDieRoll) battle.Reactions.SubscribeManaDieRolled((status as IReactManaDieRoll).onManaDieRoll);
+        if (status is IReactManaRollResult) battle.Reactions.SubscribeManaRollResult((status as IReactManaRollResult).onManaRollResult);
+        if (status is IReactTargeting) battle.Reactions.SubscribeTargeting((status as IReactTargeting).onTargeting); ;
+        if (status is IReactActionResult) battle.Reactions.SubscribeActionResult((status as IReactActionResult).onActionResult);
+        if (status is IReactAbilityComplete) battle.Reactions.SubscribeAbilityComplete((status as IReactAbilityComplete).onAbilityComplete); ;
+        if (status is IReactEndOfTurn) battle.Reactions.SubscribeEndUnitTurn((status as IReactEndOfTurn).onEndOfTurn); ;
+        if (status is IReactUnitDeath) battle.Reactions.SubscribeUnitDeath((status as IReactUnitDeath).onUnitDeath); ;
+    }
+
+    public void UnsubscribeAll()
+    {
+        if (this is IReactStartTurn) BattleController.Reactions.StartOfTurn -= (this as IReactStartTurn).onStartTurn;
+        if (this is IReactManaDieRoll) BattleController.Reactions.ManaDieRoll -= (this as IReactManaDieRoll).onManaDieRoll;
+        if (this is IReactManaRollResult) BattleController.Reactions.ManaRollResult -= (this as IReactManaRollResult).onManaRollResult;
+        if (this is IReactTargeting) BattleController.Reactions.Targeting -= (this as IReactTargeting).onTargeting;
+        if (this is IReactActionResult) BattleController.Reactions.ActionResult -= (this as IReactActionResult).onActionResult;
+        if (this is IReactAbilityComplete) BattleController.Reactions.AbilityComplete -= (this as IReactAbilityComplete).onAbilityComplete;
+        if (this is IReactEndOfTurn) BattleController.Reactions.EndOfTurn -= (this as IReactEndOfTurn).onEndOfTurn;
+        if (this is IReactUnitDeath) BattleController.Reactions.UnitDeath -= (this as IReactUnitDeath).onUnitDeath;
+    }
+
+    public bool UnitHasStatus()
+    {
+        foreach (Status status in Owner.statusList)
+        {
+            if (status.Name == this.Name) return true;
+        }
+        return false;
+    }
+
+    public int ChangeStacks(int stacks)
+    {
+        Stacks += stacks;
+        if (Stacks <= 0)
+        {
+            UnsubscribeAll();
+            Owner.statusList.Remove(this);
+            //log removal here or in resultStatus?
+        }
+        return stacks;
+    }
 }
 
 #region Interfaces
 
+public interface IReactStartBattle
+{
+    public abstract void onStartBattle();
+}
 public interface IReactStartTurn
 {
     public abstract void onStartTurn(object sender, Unit unit);
-    public void UnsubscribeStartTurn(Battle battle)
-    {
-        battle.Reactions.StartOfTurn -= onStartTurn;
-    }
-    public void SubscribeStartTurn(Battle battle)
-    {
-        battle.Reactions.SubscribeStartUnitTurn(onStartTurn);
-    }
-
 }
 
 public interface IReactManaDieRoll
 {
     public abstract void onManaDieRoll(object sender, ResultRollMana result);
-    public void UnsubscribeManaDieRoll(Battle battle)
-    {
-        battle.Reactions.ManaDieRoll -= onManaDieRoll;
-    }
-    public void SubscribeManaDieRoll(Battle battle)
-    {
-        battle.Reactions.SubscribeManaDieRolled(onManaDieRoll);
-    }
 }
 
 public interface IReactManaRollResult
 {
     public abstract void onManaRollResult(object sender, ResultRollMana result);
-    public void UnsubscribeManaRollResult(Battle battle)
-    {
-        battle.Reactions.ManaRollResult -= onManaRollResult;
-    }
-    public void SubscribeManaRollResult(Battle battle)
-    {
-        battle.Reactions.SubscribeManaRollResult(onManaRollResult);
-    }
 }
 
 public interface IReactTargeting
 {
     public abstract void onTargeting(object sender, ResultTargetting result);
-    public void UnsubscribeTargeting(Battle battle)
-    {
-        battle.Reactions.Targeting -= onTargeting;
-    }
-    public void SubscribeTargeting(Battle battle)
-    {
-        battle.Reactions.SubscribeTargeting(onTargeting);
-    }
 }
 
 public interface IReactActionResult
 {
     public abstract void onActionResult(object sender, Action result);
-    public void UnsubscribeActionResult(Battle battle)
-    {
-        battle.Reactions.ActionResult -= onActionResult;
-    }
-    public void SubscribeActionResult(Battle battle)
-    {
-        battle.Reactions.SubscribeActionResult(onActionResult);
-    }
 }
 
 public interface IReactAbilityComplete
 {
     public abstract void onAbilityComplete(object sender, ResultAbility result);
-    public void UnsubscribeAbilityComplete(Battle battle)
-    {
-        battle.Reactions.AbilityComplete -= onAbilityComplete;
-    }
-    public void SubscribeAbilityComplete(Battle battle)
-    {
-        battle.Reactions.SubscribeAbilityComplete(onAbilityComplete);
-    }
 }
 
 public interface IReactEndOfTurn
 {
     public abstract void onEndOfTurn(object sender, Unit unit);
-    public void UnsubscribeEndOfTurn(Battle battle)
-    {
-        battle.Reactions.EndOfTurn -= onEndOfTurn;
-    }
-    public void SubscribeEndOfTurn(Battle battle)
-    {
-        battle.Reactions.SubscribeEndUnitTurn(onEndOfTurn);
-    }
 }
 
 public interface IReactUnitDeath
 {
     public abstract void onUnitDeath(object sender, Unit unit);
-    public void UnsubscribeUnitDeath(Battle battle)
-    {
-        battle.Reactions.UnitDeath -= onUnitDeath;
-    }
-    public void SubscribeUnitDeath(Battle battle)
-    {
-        battle.Reactions.SubscribeUnitDeath(onUnitDeath);
-    }
 }
 
 
@@ -142,16 +128,21 @@ public class S_Poison : Status, IReactStartTurn
 
     public override string Name { get; } = "Poison";
 
-    public override void SubscribeEvents(Battle battle)
-    {
-        battle.Reactions.SubscribeStartUnitTurn(onStartTurn);
-    }
     public void onStartTurn(object sender, Unit unit)
     {
-        Reaction reaction = new Reaction(this);
-        Damage damage = new Damage("Poison", DamageType.Nature, Stacks);
-        ResultDamage resultDamage = new ResultDamage(damage);
-        //TODO: send it
+        if (unit != null && unit == Owner)
+        {
+            Reaction reaction = new Reaction(this);
+
+            ResultDamage resultDamage = new ResultDamage(new Damage("Poison", DamageType.Nature, Stacks)); //deal 1 damage per stack
+            reaction.AddResult(resultDamage);
+            
+            ResultStatus resultStatus = new ResultStatus(this, -1);  //lose 1 stack at the start of affected unit's turn after dealing damage
+            reaction.AddResult(resultStatus);
+
+            BattleController.PushAction(reaction);
+        }
+        
     }
 }
 

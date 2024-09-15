@@ -18,8 +18,8 @@ public class Unit : EventArgs, IOccupyBattleSpace
     public int MaxSwift = 1;
     public int CurrentSwift = 1;
     
-    public int MaxMove = 3;
-    public int CurrentMove = 3;
+    public int MaxMove = 30; //Moving 1 square costs 10, 15 for diaganol
+    public int CurrentMove = 30;
 
     public int PWR = 1;
     public int AGL = 1;
@@ -33,11 +33,13 @@ public class Unit : EventArgs, IOccupyBattleSpace
 
     List<Dice> DiceList = new List<Dice>();
     public List<Tactic> Tactics = new List<Tactic>();
-    public List<Reaction> Reactions { get; } = new List<Reaction>();
+    public List<Status> statusList { get; protected set; } = new List<Status>();
 
     public int StartingRow = 0;
     public int StartingCol = 0;
     public int Init = 0;
+
+    public int safeGuard = 0;
 
     public Battle Battle { get; protected set; }
 
@@ -46,10 +48,10 @@ public class Unit : EventArgs, IOccupyBattleSpace
     public void BattleStart(Battle battle)
     {
         Battle = battle;
-        foreach (Reaction r in Reactions)
+        foreach (Status status in statusList)
         {
-            if (r is ReactionStartBattle) (r as ReactionStartBattle).onEvent();
-            else r.Subscribe(battle);
+            if (status is IReactStartBattle) (status as IReactStartBattle).onStartBattle();
+            else status.Subscribe(battle);
         }
     }
 

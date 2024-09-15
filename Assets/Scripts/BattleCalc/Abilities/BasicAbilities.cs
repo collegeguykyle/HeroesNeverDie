@@ -49,3 +49,24 @@ public class Melee1 : Ability, IHit, IDealDamage
 
 }
 
+public class MoveBasic : Ability, IMoveSelf
+{
+    public MoveBasic(Unit OwningUnit) : base(OwningUnit)
+    {
+    }
+
+    public override string Name { get; protected set; } = "Basic Move";
+    public override Mana cost { get; protected set; } = new Mana();
+    public override int Range { get; protected set; } = 0;
+    public override bool UseEngaged { get; protected set; } = false;
+    public override Team targets { get; protected set; } = Team.enemy;
+
+    public override void ExecuteAbility(ResultTargetting TargettingData)
+    {
+        List<BattleSpace> path = OwningUnit.Battle.SpaceController.CalculatePath(OwningUnit, TargettingData.GetUnitTarget());
+        if (path.Count > 0)
+        {
+            
+        }
+    }
+}

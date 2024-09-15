@@ -16,6 +16,22 @@ public class BattleSpacesController
         CreateBattleSpaces();
     }
 
+#region Controller Setup
+
+    private void CreateBattleSpaces()
+    {
+        int rows = battleSpaces.GetLength(0);
+        int cols = battleSpaces.GetLength(1);
+
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                battleSpaces[i, j] = new BattleSpace(i, j);
+            }
+        }
+    }
+
     public bool TryOccupySpace(IOccupyBattleSpace entity, BattleSpace space)
     {
         if (IsSpaceOccupied(space.row, space.col))
@@ -66,6 +82,10 @@ public class BattleSpacesController
         //[ ] cycle through all the spaces to find one that is free for the unit to go into based on its Team
     }
 
+#endregion
+
+#region Info Pulls on location of units or battle spaces
+
     public bool IsSpaceOccupied(int Row, int Col)
     {
         if (battleSpaces[Row-1, Col-1].isInSpace == null) return false;
@@ -91,6 +111,10 @@ public class BattleSpacesController
         }
         return null;
     }
+
+#endregion
+
+#region Ability Targeting Methods
 
     public List<IOccupyBattleSpace> GetTargetsInRange(int Row, int Col, int range, Team targetsTeam, bool excludeStart)
     {
@@ -162,6 +186,10 @@ public class BattleSpacesController
         return Mathf.RoundToInt(distance * 10);
     }
 
+    #endregion
+
+#region Path Finding
+
     public List<BattleSpace> CalculatePath(int rowStart, int colStart, int rowGoal, int colGoal)
     {
         List<BattleSpace> openList = new List<BattleSpace>();
@@ -222,6 +250,19 @@ public class BattleSpacesController
         }
         return null; //if you get here then the algo searched every space and never found a path;
     }
+    public List<BattleSpace> CalculatePath(Unit mover, IOccupyBattleSpace target)
+    {
+        BattleSpace moverSpace = GetSpaceOf(mover);
+        BattleSpace targetSpace = GetSpaceOf(target);
+        List<BattleSpace> path = CalculatePath(moverSpace.row, moverSpace.col, targetSpace.row, targetSpace.col);
+        return path;
+    }
+    public List<BattleSpace> CalculatePath(Unit mover, BattleSpace target)
+    {
+        BattleSpace moverSpace = GetSpaceOf(mover);
+        List<BattleSpace> path = CalculatePath(moverSpace.row, moverSpace.col, target.row, target.col);
+        return path;
+    }
     private void ResetPathfindingScores()
     {
         foreach (BattleSpace space in battleSpaces)
@@ -256,20 +297,10 @@ public class BattleSpacesController
         return GetNeighbors(GetBattleSpaceAt(row, col));
     }
 
+    #endregion
+   
+    
 
-    private void CreateBattleSpaces()
-    {
-        int rows = battleSpaces.GetLength(0);
-        int cols = battleSpaces.GetLength(1);
-
-        for (int i = 0; i < rows; i++)
-        {
-            for(int j = 0; j < cols; j++)
-            {
-                battleSpaces[i,j] = new BattleSpace(i,j);
-            }
-        }
-    }
 
 }
 
@@ -307,6 +338,7 @@ public class BattleSpace : IComparable<BattleSpace>
 
 public interface IOccupyBattleSpace
 {
-    public Team Team { get; }
+    public abstract Team Team { get; }
+    public abstract List<Status> statusList { get; }
     
 }

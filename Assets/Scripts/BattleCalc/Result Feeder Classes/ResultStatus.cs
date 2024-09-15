@@ -6,12 +6,16 @@ using System.Collections.Generic;
 public class ResultStatus : ActionResult
 {
     public Status status;
-    public int stacks;
+    public int stacksChange;
+    public int newStacksTotal;
+    
+    bool newStatus = false; //set true if unit does not currently have any stacks of this status and replay should add an icon
+    bool removeStatus = false; //set true if status is gone now and replay should remove its icon
 
     public ResultStatus (Status status, int stacks)
     {
         this.status = status;
-        this.stacks = stacks;
+        this.stacksChange = stacks;
     }
     public ResultStatus() { }
 }

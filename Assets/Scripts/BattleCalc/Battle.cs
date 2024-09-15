@@ -58,7 +58,7 @@ public class Battle
         Reactions.SendStartUnitTurn(CurrentUnit); 
         CurrentUnit.RollManaDice(); //1: Unit rolls mana
         List<Tactic> Tactics = CurrentUnit.Tactics;
-
+        CurrentUnit.safeGuard = 0;
         //2: itterate through unit's tactics in order of priority until we find one that can be used, and use it
         //if we use an abiltiy, repeat the process. Can use any number of abilities on a turn if mana remains
         //and abilities have sufficient uses available. If we itterate through full list without finding
@@ -76,7 +76,12 @@ public class Battle
                     break;
                 }
             }
-
+            CurrentUnit.safeGuard++;
+            if (CurrentUnit.safeGuard > 20)
+            {
+                passTurn = true;
+                Debug.Log($"{CurrentUnit} turn passed via 20 tactics passes safeguard");
+            }
         } while (!passTurn);
 
         CurrentUnit.ClearMana();
@@ -110,6 +115,12 @@ public class Battle
         }
 
     }
+
+    #endregion
+
+#region Game Play Loop Action Pushes
+
+
 
     #endregion
 

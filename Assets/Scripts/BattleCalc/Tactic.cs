@@ -67,7 +67,7 @@ public class Tactic
         bool engaged = battleController.TestEngaged(Owner);
         if (engaged && !Ability.UseEngaged) return false;        //if unit is engaged can this ability be used?
 
-        if (Ability.Range == 0 && Owner.CurrentMove < 1) return false; //if move ability and no movement points
+        if (Ability is IMoveSelf && Owner.CurrentMove < 1) return false; //if move ability and no movement points
 
         return true;
     }
