@@ -6,8 +6,8 @@ using UnityEngine;
 
 public class ResultDamage : ActionResult
 {
-    public int TotalDamage;
-    public List<Damage> DamageRolls;
+    public int TotalDamage = 0;
+    public List<Damage> DamageRolls = new List<Damage>();
 
     public static ResultDamage RollDamage(ResultHit attack, IDealDamage ability)
     {

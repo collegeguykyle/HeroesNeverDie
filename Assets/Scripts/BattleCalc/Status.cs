@@ -140,7 +140,7 @@ public class S_Poison : Status, IReactStartTurn
             ResultStatus resultStatus = new ResultStatus(this, -1);  //lose 1 stack at the start of affected unit's turn after dealing damage
             reaction.AddResult(resultStatus);
 
-            BattleController.PushAction(reaction);
+            BattleController.AddToActionStack(reaction);
         }
         
     }

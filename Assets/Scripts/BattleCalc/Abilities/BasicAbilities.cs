@@ -60,13 +60,31 @@ public class MoveBasic : Ability, IMoveSelf
     public override int Range { get; protected set; } = 0;
     public override bool UseEngaged { get; protected set; } = false;
     public override Team targets { get; protected set; } = Team.enemy;
+    bool IMoveSelf.validPath { get ; set ; }
 
     public override void ExecuteAbility(ResultTargetting TargettingData)
     {
-        List<BattleSpace> path = OwningUnit.Battle.SpaceController.CalculatePath(OwningUnit, TargettingData.GetUnitTarget());
-        if (path.Count > 0)
-        {
-            
-        }
+        ResultMovement result = ResultMovement.MoveUnitTowards(OwningUnit, TargettingData.SelectedTarget.BattleSpace, MoveType.Walk);
+        OwningUnit.Battle.AddToActionStack(result, this);
+    }
+}
+
+public class ApplyPoison : Ability, IApplyStatus
+{
+    public override string Name { get ; protected set ; }
+    public override Mana cost { get ; protected set ; }
+    public override int Range { get ; protected set ; }
+    public override bool UseEngaged { get ; protected set ; }
+    public override Team targets { get ; protected set ; }
+
+    public List<Status> StatusToApply { get; protected set; } = new List<Status>();
+
+    public ApplyPoison(Unit OwningUnit) : base(OwningUnit)
+    {
+    }
+
+    public override void ExecuteAbility(ResultTargetting TargettingData)
+    {
+        
     }
 }

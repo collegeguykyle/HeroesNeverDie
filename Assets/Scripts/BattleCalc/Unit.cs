@@ -39,8 +39,6 @@ public class Unit : EventArgs, IOccupyBattleSpace
     public int StartingCol = 0;
     public int Init = 0;
 
-    public int safeGuard = 0;
-
     public Battle Battle { get; protected set; }
 
     public Team Team { get; private set; }

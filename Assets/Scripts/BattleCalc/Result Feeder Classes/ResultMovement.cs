@@ -12,13 +12,6 @@ public class ResultMovement : ActionResult
     public int moveDist = 0;
     public bool validPath = true;
 
-    public static ResultMovement MoveUnit(Unit unit, BattleSpace to, MoveType type)
-    {
-        ResultMovement result = new ResultMovement();
-        
-
-        return result;
-    }
 
     public static ResultMovement MoveUnitTowards(Unit unit, BattleSpace to, MoveType type)
     {
@@ -87,8 +80,7 @@ public enum MoveType {  Walk, Fly, Teleport, Push, Pull }
 public interface IMoveSelf
 {
     public bool validPath { get; protected set; }
-    
-    //types of movement, like walking, flying, teleporting, etc??
+    //probably should require a MoveType enum....
     //Immune to difficult terrain types or other terrain effects?
 }
 

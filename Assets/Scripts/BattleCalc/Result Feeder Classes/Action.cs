@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 public abstract class Action : EventArgs
 {
-    //This class groups ActionST and ActionAOE and Reactions as options for ResultAbility to log in order
+    //This class groups ActionST, ActionAOE, and Reactions as options for sending into the reaction manager
+    //and for ResultAbility to log
 
 }
 
@@ -63,7 +64,7 @@ public class Reaction : Action
 {
     public Status owningStatus;
     public IOccupyBattleSpace target;
-    public List<ActionResult> actionResults;
+    public List<ActionResult> actionResults; //couldn't a reaction have an AOE effect? may need to rethink this, really I just want to log it as a reactoin but resolve it the same as the other actions
 
 
     public void AddResult(ActionResult actionResult)

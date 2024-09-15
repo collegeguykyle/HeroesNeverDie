@@ -299,7 +299,20 @@ public class BattleSpacesController
 
     #endregion
    
-    
+    public bool MoveUnitTo(Unit unit, BattleSpace space)
+    {
+        if (IsSpaceOccupied(space.row, space.col))
+        {
+            IOccupyBattleSpace who = WhoOccupiesSpace(space.row, space.col);
+            if (who is Unit) return false;
+        }
+
+        BattleSpace start = GetSpaceOf(unit);
+        start.isInSpace = null;
+        space.isInSpace = unit;
+        return true;
+        
+    }   
 
 
 }
@@ -320,6 +333,8 @@ public class BattleSpace : IComparable<BattleSpace>
     public int H = 999; //H is the heuristic — estimated distance from the current node to the end node.
 
     public IOccupyBattleSpace isInSpace;
+
+    //Add stuff here for if the battle space is in zone of control for a Unit?
 
     public BattleSpace(int Row, int Col)
     {

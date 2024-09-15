@@ -9,8 +9,8 @@ public class ResultStatus : ActionResult
     public int stacksChange;
     public int newStacksTotal;
     
-    bool newStatus = false; //set true if unit does not currently have any stacks of this status and replay should add an icon
-    bool removeStatus = false; //set true if status is gone now and replay should remove its icon
+    public bool newStatus = false; //set true if unit does not currently have any stacks of this status and replay should add an icon
+    public bool removeStatus = false; //set true if status is gone now and replay should remove its icon
 
     public ResultStatus (Status status, int stacks)
     {
