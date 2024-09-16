@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,10 +8,13 @@ using UnityEngine;
 public class ResultSave : ActionResult
 {
     //This is used if the attack uses a saving throw to determine if something hits instead of a to Hit roll
-    public Ability ability;
-    public Unit Target;
+    [JsonIgnore] public Ability ability;
+    public string abilityName;
+    [JsonIgnore] public Unit Target;
+    public string targetName;
     public SaveType saveType;
 
+    public List<MagicSkillBonus> bonusList = new List<MagicSkillBonus>();
     public int magicBonus = 0;
 
     public int roll = 0;
@@ -25,7 +29,9 @@ public class ResultSave : ActionResult
     public ResultSave(Ability ability, Unit target)
     {
         this.ability = ability;
+        abilityName = ability.Name;
         Target = target;
+        targetName = target.Name;
     }
 
     public static ResultSave TrySave(ITestSave ability, Unit target)
@@ -68,9 +74,9 @@ public interface ITestSave
 
 public class MagicSkillBonus
 {
-    String NameOfBonus;
-    String SourceOfBonus;
-    int value;
+    public String NameOfBonus;
+    public String SourceOfBonus;
+    public int value;
 }
 
 public enum SaveType { PWR, AGL, INT, ATN, FTH, LCK }

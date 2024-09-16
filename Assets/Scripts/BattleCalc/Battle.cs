@@ -42,20 +42,28 @@ public class Battle
         Reactions.UnitDeath += TestBattleOver;
         BattleLoop();
     }
+    private ResultAbility currentAbility;
 
 #region Core Game Play Loop
 
     private void BattleLoop()
     {
+        int battleSafeGuard = 0;
         while (BattleOver == false)
         {
             CurrentUnit = TurnOrder.GetCurrentUnit();  //Turn Order advances to next unit in End Unit Turn step
             TakeUnitTurn();
+            battleSafeGuard++;
+            if (battleSafeGuard > 999)
+            {
+                Debug.Log($"BATTLE ENDED via battelSafeGuard, over 999 turns executed with no victor");
+            }
         }
     }
 
     private void TakeUnitTurn()
     {
+        BattleReport.AddReport(new ReportStartTurn(CurrentUnit));
         Reactions.SendStartUnitTurn(CurrentUnit); 
         CurrentUnit.RollManaDice(); //1: Unit rolls mana
         List<Tactic> Tactics = CurrentUnit.Tactics;
@@ -64,7 +72,7 @@ public class Battle
         //and abilities have sufficient uses available. If we itterate through full list without finding
         //an abiltiy to use, then the unit cannot do anything and passes the turn.
         bool passTurn = false;
-        int safeGuard = 0; //pass the turn after X iterations through the tactic to avoid accidental infinite loops 
+        int turnSafeGuard = 0; //pass the turn after X iterations through the tactic to avoid accidental infinite loops 
         do 
         {
             passTurn = true;
@@ -77,44 +85,64 @@ public class Battle
                     break;
                 }
             }
-            safeGuard++;
-            if (safeGuard > 20)
+            turnSafeGuard++;
+            if (turnSafeGuard > 20)
             {
                 passTurn = true;
-                Debug.Log($"{CurrentUnit} turn passed via 20 tactics passes safeguard");
+                Debug.Log($"{CurrentUnit} itterated over its tactics pool 20 times but did not pass turn. Safeguard activated");
             }
         } while (!passTurn);
 
+        if (currentAbility != null)
+        {
+            BattleReport.AddReport(currentAbility);
+            currentAbility = null;
+        }
         CurrentUnit.ClearMana();
+        BattleReport.AddReport(new ReportEndTurn(CurrentUnit));
         Reactions.SendEndUnitTurn(CurrentUnit);
         TurnOrder.AdvanceToNextUnit();
     }
 
+    public void AbilitySelected(Ability ability, ResultTargetting result)
+    {
+        if (currentAbility != null) BattleReport.AddReport(currentAbility);
+        currentAbility = new ResultAbility(CurrentUnit, ability);
+    }
+    public void AbilityComplete(ResultAbility result)
+    {
+        Reactions.SendAbilityComplete(result);
+        BattleReport.AddReport(currentAbility);
+        currentAbility = null;
+    }
+
     public void TestBattleOver(object sender, Unit unit)
     {
-        bool allDead = true;
+        bool allPlayerDead = true;
+        bool allEnemyDead = true;
 
         foreach (Unit u in PlayerTeam)
         {
-            if (u.CurrentHP > 0) allDead = false;
-        }
-        if (allDead)
-        {
-            Reactions.SendEndBattle();
-            BattleOver = true;
+            if (u.CurrentHP > 0) allPlayerDead = false;
         }
 
         foreach (Unit u in EnemyTeam)
         {
-            if (u.CurrentHP > 0) allDead = false;
+            if (u.CurrentHP > 0) allEnemyDead = false;
         }
-        if (allDead)
-        {
-            Reactions.SendEndBattle();
-            BattleOver = true;
-            Reactions.Dispose();
-        }
+        
+        if (allPlayerDead && allEnemyDead) EndBattle(Team.neutral); //This is a tie
+        else if (allPlayerDead) EndBattle(Team.enemy);
+        else if (allEnemyDead) EndBattle(Team.player);
+    }
 
+    public void EndBattle(Team victors)
+    {
+        Reactions.SendEndBattle();
+        BattleOver = true;
+        Reactions.Dispose();
+        BattleReport.AddReport(currentAbility);
+        BattleReport.AddReport(new ReportEndBattle(victors));
     }
 
 #endregion
@@ -134,9 +162,9 @@ public class Battle
             ResolveAction(ActionsStack.Pop());
         }
     }
-    public void AddToActionStack(ActionResult result, Ability ability)
+    public void AddToActionStack(ActionResult result, Ability ability, IOccupyBattleSpace target)
     {
-        ActionST action = new ActionST(ability);
+        ActionST action = new ActionST(ability, target);
         action.AddResult(result);
         AddToActionStack(action);
     }
@@ -152,6 +180,7 @@ public class Battle
     {
         // Ok, all adjustments have been made and reactions stacked!
         // Now to actually DO the THINGS, and LOG the things!
+        currentAbility.AddAction(action);
         foreach (ActionResult result in action.actionResults)
         {
             if (result is ResultHit) { } //then just log it
@@ -175,7 +204,6 @@ public class Battle
         //Put code here to have damage that is going to be done altered by NON-REACTING Status, such as damage immunity
         if (target != null && target is Unit)
         {
-            //log it
             target.TakeDamage(result.TotalDamage);
         }
     }
@@ -199,8 +227,6 @@ public class Battle
             result.newStacksTotal = statusToEffect.ChangeStacks(result.stacksChange);
             result.newStatus = true;
             if (result.newStacksTotal <= 0) result.removeStatus = true;
-
-            //log it
         }
     }
     private void ResolveMove(ResultMovement result)
@@ -208,7 +234,6 @@ public class Battle
         if (result.validPath && result.moveDist <= result.unitMoved.CurrentMove)
         {
             SpaceController.MoveUnitTo(result.unitMoved, result.moveToSpace);
-            //log it
         }
     }
 

@@ -7,8 +7,10 @@ public class Dice
     public string Name { get; private set; } = "Blank Die";
     public List<DieSide> Sides { get; private set; } = new List<DieSide>();
 
-    #region Basic Die Sides
-    // **** NOTE: I changed to using prefabs for DieSides to enable setting sprites for them in the inspector
+}
+
+public static class BasicDieSides
+{
     public static DieSide Melee1 { get; private set; } = new DieSide("Melee 1", ManaType.sword);
     public static DieSide Melee2 { get; private set; } = new DieSide("Melee 2", ManaType.sword, 2);
     public static DieSide Melee3 { get; private set; } = new DieSide("Melee 3", ManaType.sword, 3);
@@ -28,10 +30,6 @@ public class Dice
     public static DieSide Magic1 { get; private set; } = new DieSide("Magic 1", ManaType.magic);
     public static DieSide Magic2 { get; private set; } = new DieSide("Magic 2", ManaType.magic, 2);
     public static DieSide Magic3 { get; private set; } = new DieSide("Magic 3", ManaType.magic, 3);
-
-    #endregion
-
-
 
 }
 

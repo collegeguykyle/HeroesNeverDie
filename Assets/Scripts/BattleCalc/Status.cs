@@ -2,18 +2,20 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Collections;
-
+using Newtonsoft.Json;
 
 public abstract class Status
 {
     public abstract string Name { get; }
     public virtual int Stacks { get; protected set; } = 0;
-    public IOccupyBattleSpace Owner { get; protected set; }
-    public Battle BattleController { get; protected set; }
+    [JsonIgnore] public IOccupyBattleSpace Owner { get; protected set; }
+    public string ownerName;
+    [JsonIgnore] public Battle BattleController { get; protected set; }
     public Status (Battle battle, IOccupyBattleSpace owner)
     {
         BattleController = battle;
         Owner = owner;
+        ownerName = owner.Name;
         Subscribe(battle);
     }
     public void addStacks(int stacks)

@@ -353,6 +353,7 @@ public class BattleSpace : IComparable<BattleSpace>
 
 public interface IOccupyBattleSpace
 {
+    public abstract string Name { get; }
     public abstract Team Team { get; }
     public abstract List<Status> statusList { get; }
     

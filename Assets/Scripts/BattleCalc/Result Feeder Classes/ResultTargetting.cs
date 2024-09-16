@@ -1,18 +1,20 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class ResultTargetting : EventArgs
+public class ResultTargetting : ToReport
 {
-    public BattleSpacesController BattleSpacesController;
-    public IOccupyBattleSpace Caster;
+    [JsonIgnore] public BattleSpacesController BattleSpacesController;
+    [JsonIgnore] public IOccupyBattleSpace Caster;
     public BattleSpace CasterBattleSpace;
-    public Ability Ability;
+    [JsonIgnore] public Ability Ability;
     public List<TargetData> Targets = new List<TargetData>();
     public List<TargetData> PriorityList = new List<TargetData>();
-    public TargetData SelectedTarget {  get; private set; }
+    public TargetData SelectedTargetData {  get; private set; }
+    [JsonIgnore] public IOccupyBattleSpace SelectedTarget { get; private set; }
 
     public ResultTargetting( Ability ability, BattleSpace space, BattleSpacesController battleSpacesController)
     {
@@ -47,16 +49,17 @@ public class ResultTargetting : EventArgs
 
     public void SetSelectedTarget(TargetData target)
     {
-        if (SelectedTarget == null && target != null)
+        if (SelectedTargetData == null && target != null)
         {
-            SelectedTarget = target;
+            SelectedTargetData = target;
             target.TacticSelected = true;
+            SelectedTarget = target.targetType;
         }
     }
     
     public Unit GetUnitTarget()  // I need to add logic to the tactic decision making to allow for targeting only units or terrain and update this work flow
     {
-        return SelectedTarget.targetType as Unit;
+        return SelectedTargetData.targetType as Unit;
     }
     
 }
@@ -64,6 +67,7 @@ public class ResultTargetting : EventArgs
 public class TargetData
 {
     public IOccupyBattleSpace targetType;
+    public string targetName;
     public BattleSpace BattleSpace;
     public int rangeTo;
     public int pathDist;
@@ -78,6 +82,7 @@ public class TargetData
     public TargetData(IOccupyBattleSpace target, int rangeTo, int pathDist, List<IOccupyBattleSpace> othersAOE)
     {
         this.targetType = target;
+        this.targetName = target.Name;
         this.rangeTo = rangeTo;
         this.pathDist = pathDist;
         OthersAOE = othersAOE;

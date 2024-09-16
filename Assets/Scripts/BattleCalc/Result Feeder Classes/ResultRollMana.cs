@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using Newtonsoft.Json;
 
-public class ResultRollMana : EventArgs
+public class ResultRollMana : ToReport
 {
-    public Unit owner;
+    [JsonIgnore] public Unit owner;
+    public string ownerName;
     public List<DieSide> rolledSides = new List<DieSide>();
     public List<DieSide> modifiedSides = new List<DieSide>();
 
@@ -21,5 +23,6 @@ public class ResultRollMana : EventArgs
     public ResultRollMana(Unit Owner)
     {
         this.owner = Owner;
+        this.ownerName = Owner.Name;
     }
 }

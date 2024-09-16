@@ -1,16 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using AYellowpaper;
-using AYellowpaper.SerializedCollections;
 
-[Serializable] public enum ManaType { sword, shield, bow, magic, light, shadow, earth, wind, water, fire, nature, shock, ice, poison, gear, };
 
-[Serializable]
+public enum ManaType { sword, shield, bow, magic, light, shadow, earth, wind, water, fire, nature, shock, ice, poison, gear, };
+
+
 public class Mana
 {
-    [SerializedDictionary("ManaType", "Amount")]
-    private SerializedDictionary<ManaType, int> count = new SerializedDictionary<ManaType, int>();
+    public Dictionary<ManaType, int> count { get; private set; } = new Dictionary<ManaType, int>();
 
     public void AddManaType(ManaType type, int num)
     {

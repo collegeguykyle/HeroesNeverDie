@@ -1,10 +1,11 @@
+using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
 
 
 public class Tactic
 {
-    private Unit Owner;
+    [JsonIgnore] private Unit Owner;
     private Ability Ability;
     private TCondition Condition1;
     private TCondition Condition2;
@@ -44,10 +45,10 @@ public class Tactic
         TargettingData = TestTargetSelector(Condition2, TargettingData, map);
 
         //9.2: If no final selector condition, choose closest, then randomly --OR-- ability has prefered Selector if player does not input one
-        if (TargettingData.SelectedTarget == null) TargettingData = TestTargetSelector(TCondition.Closest, TargettingData, map);
+        if (TargettingData.SelectedTargetData == null) TargettingData = TestTargetSelector(TCondition.Closest, TargettingData, map);
 
         //10.1: If still no target selection then nothing to target, so return false, else broadcast target data to reactions
-        if (TargettingData.SelectedTarget == null) return false;
+        if (TargettingData.SelectedTargetData == null) return false;
         battleController.Reactions.SendTargeting(TargettingData);
 
         //*****10: Execute the ability against the chosen target*****

@@ -1,8 +1,9 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
 
-public abstract class Action : EventArgs
+public abstract class Action : ToReport
 {
     //This class groups ActionST, ActionAOE, and Reactions as options for sending into the reaction manager
     //and for ResultAbility to log
@@ -16,8 +17,9 @@ public abstract class ActionResult
 
 public class ActionST : Action
 {
-    public IOccupyBattleSpace target;
-    public List<ActionResult> actionResults;
+    [JsonIgnore] public IOccupyBattleSpace target;
+    public string targetName;
+    public List<ActionResult> actionResults = new List<ActionResult>();
     public Ability owningAbility;
 
     public void AddResult(ActionResult actionResult)
@@ -25,9 +27,11 @@ public class ActionST : Action
         actionResults.Add(actionResult);
     }
 
-    public ActionST(Ability ability)
+    public ActionST(Ability ability, IOccupyBattleSpace target)
     {
         this.owningAbility = ability;
+        this.target = target;
+        targetName = target.Name;
     }
 
 }
@@ -63,7 +67,8 @@ public enum AOEShape { Circle, Line, Laser, Cone, Box }
 public class Reaction : Action
 {
     public Status owningStatus;
-    public IOccupyBattleSpace target;
+    [JsonIgnore] public IOccupyBattleSpace target;
+    public string targetName;
     public List<ActionResult> actionResults; //couldn't a reaction have an AOE effect? may need to rethink this, really I just want to log it as a reactoin but resolve it the same as the other actions
 
 
@@ -72,9 +77,11 @@ public class Reaction : Action
         actionResults.Add(actionResult);
     }
 
-    public Reaction(Status status)
+    public Reaction(Status status, IOccupyBattleSpace target)
     {
         owningStatus = status;
+        this.target = target;
+        this.targetName = target.Name;
     }
 
 

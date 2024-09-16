@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using System;
 
 public class BattleReport
 {
@@ -20,15 +21,11 @@ public class BattleReport
     //really thats it, just need to log in order whenever something happens so the replay can then show the animations
     //for those things happening and update the UI and on screen battle log.
 
-    private List<ToReport> Reports = new List<ToReport>();
-
     private List<Unit> PlayerTeam;
     private List<Unit> EnemyTeam;
 
-    public List<ToReport> GetBattleReport()
-    {
-        return Reports;
-    }
+    public List<ToReport> Reports { get; protected set; } = new List<ToReport>();
+
     public void AddReport(ToReport report)
     {
         Reports.Add(report);
@@ -38,9 +35,10 @@ public class BattleReport
         PlayerTeam = playerTeam;
         EnemyTeam = enemyTeam;
     }
+
 }
 
-public abstract class ToReport
+public abstract class ToReport : EventArgs
 {
     
 }
@@ -52,4 +50,39 @@ public class ReportStartTurn : ToReport
     {
         this.unit = unit;
     }
+}
+public class ReportEndTurn : ToReport
+{
+    public Unit unit;
+    public ReportEndTurn(Unit unit)
+    {
+        this.unit = unit;
+    }   
+}
+
+public class ReportStartRound : ToReport
+{
+    public int round;
+    public ReportStartRound(int round)
+    {
+        this.round = round;
+    }
+}
+
+public class ReportUnitDeath : ToReport
+{
+    public Unit unitKilled;
+    public ReportUnitDeath(Unit unitKilled)
+    {
+        this.unitKilled = unitKilled;
+    }
+}
+
+public class ReportEndBattle : ToReport
+{
+    public Team Victors;
+    public ReportEndBattle(Team victors)
+    {
+        Victors = victors;
+    }   
 }

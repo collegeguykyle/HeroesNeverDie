@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,16 +8,10 @@ using System.Collections.Generic;
 public enum Team { player, enemy, neutral, terrain, other }
 public class Unit : EventArgs, IOccupyBattleSpace
 {
-    public string Name = "Hero Name";
+    public string Name { get; } = "Hero Name";
 
     public int MaxHP = 10;
     public int CurrentHP = 10;
-
-    public int MaxActions = 1;
-    public int CurrentActions = 1;
-
-    public int MaxSwift = 1;
-    public int CurrentSwift = 1;
     
     public int MaxMove = 30; //Moving 1 square costs 10, 15 for diaganol
     public int CurrentMove = 30;
@@ -32,14 +27,14 @@ public class Unit : EventArgs, IOccupyBattleSpace
     public Mana ManaLost = new Mana();
 
     List<Dice> DiceList = new List<Dice>();
-    public List<Tactic> Tactics = new List<Tactic>();
+    [JsonIgnore] public List<Tactic> Tactics = new List<Tactic>();
     public List<Status> statusList { get; protected set; } = new List<Status>();
 
-    public int StartingRow = 0;
-    public int StartingCol = 0;
+    [JsonIgnore] public int StartingRow = 0;
+    [JsonIgnore] public int StartingCol = 0;
     public int Init = 0;
 
-    public Battle Battle { get; protected set; }
+    [JsonIgnore] public Battle Battle { get; protected set; }
 
     public Team Team { get; private set; }
 

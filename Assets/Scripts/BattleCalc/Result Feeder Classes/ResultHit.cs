@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,24 +7,25 @@ using UnityEngine;
 
 public class ResultHit : ActionResult
 {
-    public Ability Ability;
-    public Unit Target;
+    [JsonIgnore] public Ability Ability;
+    [JsonIgnore] public Unit Target;
+    public string TargetName;
 
     public int roll = 0;
-
-    public bool success = false;
-    public bool crit = false;
-    public bool critMiss = false;
-    
     public int attackBonus = 0;
 
     public DefenseType defenseType;
     public int defenseValue = 0;
 
+    public bool success = false;
+    public bool crit = false;
+    public bool critMiss = false;
+    
     public ResultHit(Ability ability, Unit target)
     {
         Ability = ability;
         Target = target;
+        TargetName = target.Name;
     }
 
     public static ResultHit TryHit(IHit ability, Unit target)
@@ -72,9 +74,9 @@ public interface IHit
 
 public class ToHitBonus
 {
-    String NameOfBonus;
-    String SourceOfBonus;
-    int value;
+    public String NameOfBonus;
+    public String SourceOfBonus;
+    public int value;
 }
 
 public enum AttackType { Physical, Magical }

@@ -1,11 +1,13 @@
 
 
 
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 public class ResultMovement : ActionResult
 {
-    public Unit unitMoved;
+    [JsonIgnore] public Unit unitMoved;
+    public string unitMovedName;
     public MoveType moveType;
     public BattleSpace startSpace;
     public BattleSpace moveToSpace;
@@ -17,6 +19,7 @@ public class ResultMovement : ActionResult
     {
         ResultMovement result = new ResultMovement();
         result.unitMoved = unit;
+        result.unitMovedName = unit.Name;
         result.moveType = type;
 
         List<BattleSpace> path = unit.Battle.SpaceController.CalculatePath(unit, to);
@@ -37,6 +40,7 @@ public class ResultMovement : ActionResult
     {
         ResultMovement result = new ResultMovement();
         result.unitMoved = unit;
+        result.unitMovedName = unit.Name;
         result.moveType = type;
 
         BattleSpace to = target.Battle.SpaceController.GetSpaceOf(target);

@@ -156,7 +156,7 @@ public class ReactionsManager : IDisposable
                 catch (Exception ex) { Debug.Log($"End of Battle Event Exception:  " + ex.Message); }
             }
         }
-        //[ ] push the Battle Report somewhere via an event broadcast?
+        
 
         Dispose();
     }
