@@ -2,13 +2,16 @@ using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 
 
 public enum Team { player, enemy, neutral, terrain, other }
 public class Unit : EventArgs, IOccupyBattleSpace
 {
-    public string Name { get; } = "Hero Name";
+    [JsonIgnore] public Battle Battle { get; protected set; }
+    public string Name { get; set; } = "Hero Name";
+    public Team Team { get; set; }
 
     public int MaxHP = 10;
     public int CurrentHP = 10;
@@ -23,20 +26,16 @@ public class Unit : EventArgs, IOccupyBattleSpace
     public int FTH = 1;
     public int LCK = 1;
 
-    public Mana Mana = new Mana();
-    public Mana ManaLost = new Mana();
+    [JsonIgnore] public int StartingRow = 0;
+    [JsonIgnore] public int StartingCol = 0;
+    public int Init = 0;    
 
-    List<Dice> DiceList = new List<Dice>();
+    public List<Dice> DiceList = new List<Dice>();
     [JsonIgnore] public List<Tactic> Tactics = new List<Tactic>();
     public List<Status> statusList { get; protected set; } = new List<Status>();
 
-    [JsonIgnore] public int StartingRow = 0;
-    [JsonIgnore] public int StartingCol = 0;
-    public int Init = 0;
-
-    [JsonIgnore] public Battle Battle { get; protected set; }
-
-    public Team Team { get; private set; }
+    public Mana Mana = new Mana();
+    public Mana ManaLost = new Mana(); 
 
     public void BattleStart(Battle battle)
     {
@@ -48,8 +47,17 @@ public class Unit : EventArgs, IOccupyBattleSpace
         }
     }
 
+    public void AddDie(Dice dice)
+    {
+        Dice die = new Dice();
+        foreach(DieSide side in dice.Sides)
+        {
+            die.AddSide(side);
+        }
+        DiceList.Add(die);
+    }
 
-    public void RollManaDice()
+    public ResultRollMana RollManaDice()
     {
         ResultRollMana result = new ResultRollMana(this);
         //for each dice in the dice list, roll it and add its mana to the mana pool
@@ -59,9 +67,7 @@ public class Unit : EventArgs, IOccupyBattleSpace
             DieSide side = dice.Sides[rand];
             result.rolledSides.Add(side);
         }
-        Battle.Reactions.SendManaDieRolled(result); //reactions that modify the faces of the dice after they are rolled
-        Battle.Reactions.SendRollResult(result); //reactions that do things based on final roll result
-        Mana.AddMana(result.TotalMana());
+        return result;
     }
 
     public int GetDodge()

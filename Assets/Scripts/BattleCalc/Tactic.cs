@@ -3,12 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 
 
-public class Tactic
+public class Tactic : ToReport
 {
+    public bool TacticSelected = false;
     [JsonIgnore] private Unit Owner;
-    private Ability Ability;
-    private TCondition Condition1;
-    private TCondition Condition2;
+    public Ability Ability { get; private set; }
+    public TCondition Condition1 { get; private set; }
+    public TCondition Condition2 { get; private set; }
+    public BasicConditions ConditionsCheck { get; private set; }
+    public ResultTargetting resultTargetting { get; set; }
 
     public Tactic(Unit owner, Ability ability, TCondition condition1, TCondition condition2)
     {
@@ -18,59 +21,57 @@ public class Tactic
         Condition2 = condition2;
     }
 
-
-    public bool TestTactic(Battle battleController, BattleSpacesController map, Mana AvailableMana)
+    public ResultTargetting TestTactic(Battle battleController, BattleSpacesController map, Mana AvailableMana)
     {
-        //3-5: Are basic requirements to use the tactic met? Unit alive, enough mana, etc
-        if (!BasicConditionsMet(battleController, AvailableMana)) return false; 
-
         //6: Can unit target an enemy with it from where it is?
-        ResultTargetting TargettingData = map.GetTargets(Ability); 
-        if (!TargettingData.TargetInRange()) return false;
+        resultTargetting = map.GetTargets(Ability); 
+        if (!resultTargetting.TargetInRange()) return resultTargetting;
 
         //7: If a mandatory target condition, ensure options meets requirement
-        foreach (TargetData target in TargettingData.Targets) 
+        foreach (TargetData target in resultTargetting.Targets) 
         {
             if (TestTargetRequirements(Condition1, target.targetType, map)) target.TacticRequirement = true; else target.TacticRequirement = false;
             if (TestTargetRequirements(Condition2, target.targetType, map)) target.TacticRequirement = true; else target.TacticRequirement = false;
         }
-        if (TargettingData.TargetInRange()) return false;
+        if (resultTargetting.TargetInRange()) return resultTargetting;
 
         //8: Filter out options based on condition priorities
-        TargettingData = TestTargetPrefernce(Condition1, TargettingData, battleController);
-        TargettingData = TestTargetPrefernce(Condition2, TargettingData, battleController);
+        resultTargetting = TestTargetPrefernce(Condition1, resultTargetting, battleController);
+        resultTargetting = TestTargetPrefernce(Condition2, resultTargetting, battleController);
 
         //9.1: If one of the conditions is a selector, use it to select the final target
-        TargettingData = TestTargetSelector(Condition1, TargettingData, map);        
-        TargettingData = TestTargetSelector(Condition2, TargettingData, map);
+        resultTargetting = TestTargetSelector(Condition1, resultTargetting, map);        
+        resultTargetting = TestTargetSelector(Condition2, resultTargetting, map);
 
         //9.2: If no final selector condition, choose closest, then randomly --OR-- ability has prefered Selector if player does not input one
-        if (TargettingData.SelectedTargetData == null) TargettingData = TestTargetSelector(TCondition.Closest, TargettingData, map);
+        if (resultTargetting.SelectedTargetData == null) resultTargetting = TestTargetSelector(TCondition.Closest, resultTargetting, map);
 
         //10.1: If still no target selection then nothing to target, so return false, else broadcast target data to reactions
-        if (TargettingData.SelectedTargetData == null) return false;
-        battleController.Reactions.SendTargeting(TargettingData);
+        if (resultTargetting.SelectedTargetData == null) return resultTargetting;
 
         //*****10: Execute the ability against the chosen target*****
-        Ability.ExecuteAbility(TargettingData);
-        return true;
+        TacticSelected = true;
+        return resultTargetting;
+
     }
 
 
-    private bool BasicConditionsMet(Battle battleController,  Mana AvailableMana)
+    public bool BasicConditionsMet(Battle battleController,  Mana AvailableMana)
     {
-        if(Owner.CurrentHP <= 0) return false;                  //Unit still alive?
-        if (!Ability.TestManaCost(AvailableMana)) return false; //enough mana?
+        ConditionsCheck = new BasicConditions();
+        if (Owner.CurrentHP <= 0) ConditionsCheck.UnitAlive = false;                 //Unit still alive?
+        if (!Mana.TryCosts(Ability.cost, AvailableMana)) ConditionsCheck.EnoughMana = false;
+        //if (!Ability.TestManaCost(AvailableMana)) ConditionsCheck.EnoughMana = false; //enough mana?
 
-        if (!TestSelfCondition(Condition1)) return false;
-        if (!TestSelfCondition(Condition2)) return false;        //any exlusionary conditions?
+        if (!TestSelfCondition(Condition1)) ConditionsCheck.Condition1Exclusionary = false;
+        if (!TestSelfCondition(Condition2)) ConditionsCheck.Condition2Exclusionary = false;        //any exlusionary conditions?
 
         bool engaged = battleController.TestEngaged(Owner);
-        if (engaged && !Ability.UseEngaged) return false;        //if unit is engaged can this ability be used?
+        if (engaged && !Ability.UseEngaged) ConditionsCheck.EngagedLimited = false;        //if unit is engaged can this ability be used?
 
-        if (Ability is IMoveSelf && Owner.CurrentMove < 1) return false; //if move ability and no movement points
-
-        return true;
+        if (Ability is IMoveSelf && Owner.CurrentMove < 1) ConditionsCheck.MovePoints = false; //if move ability and no movement points
+        
+        return ConditionsCheck.AllConditionsMet();
     }
 
     private Team TargetConversion(Unit unit, Team target)
@@ -270,6 +271,22 @@ public class Tactic
                 break;
         }
         return targets;
+    }
+}
+
+public class BasicConditions
+{
+    public bool UnitAlive = true;
+    public bool EnoughMana = true;
+    public bool Condition1Exclusionary = true;
+    public bool Condition2Exclusionary = true;
+    public bool EngagedLimited = true;
+    public bool MovePoints = true;
+
+    public bool AllConditionsMet()
+    {
+        if(UnitAlive && EnoughMana && Condition1Exclusionary && Condition2Exclusionary && EngagedLimited && MovePoints) return true;
+        else return false;
     }
 }
 

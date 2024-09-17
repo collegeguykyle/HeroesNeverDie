@@ -3,13 +3,24 @@ using System.Collections;
 using System.Collections.Generic;
 
 
-public enum ManaType { sword, shield, bow, magic, light, shadow, earth, wind, water, fire, nature, shock, ice, poison, gear, };
+public enum ManaType { sword, shield, bow, magic, light, shadow, earth, wind, water, fire, nature, shock, ice, poison, gear, blank};
 
 
 public class Mana
 {
     public Dictionary<ManaType, int> count { get; private set; } = new Dictionary<ManaType, int>();
 
+    public void ReportMana(BattleReport report)
+    {
+        string manaReport = "ManaReport:  ";
+        
+        foreach(ManaType type in count.Keys)
+        {
+            manaReport += type + ": " + count[type] + " | ";
+        }
+        report.AddReport(new ReportMessage(manaReport));
+    }
+    
     public void AddManaType(ManaType type, int num)
     {
         if (count.ContainsKey(type))
@@ -38,9 +49,9 @@ public class Mana
         if (count.ContainsKey(type))
         {
             count[type] -= num;
-            if (count[type] < 0) 
+            if (count[type] <= 0) 
             { 
-                count[type] = 0; 
+                count.Remove(type);
             }
         }
     }
@@ -49,39 +60,34 @@ public class Mana
         if (count.ContainsKey(type))
         {
             count[type] -= 1;
-            if (count[type] < 0)
+            if (count[type] <= 0)
             {
-                count[type] = 0;
+                count.Remove(type);
             }
         }
     }
 
     public void AddMana(Mana mana)
     {
-        foreach (ManaType type in mana.count.Values)
+        foreach (ManaType type in mana.count.Keys)
         {
-            int num; 
-            mana.count.TryGetValue(type, out num);
-            AddManaType(type, num);
+            AddManaType(type, mana.count[type]);
         }
     }
 
     public void RemoveMana(Mana mana)
     {
-        foreach(ManaType type in mana.count.Values)
+        foreach(ManaType type in mana.count.Keys)
         {
-            int num;
-            mana.count.TryGetValue(type, out num);
-            RemoveManaType(type, num);
+            RemoveManaType(type, mana.count[type]);
         }
     }
 
-    public static bool TryCost(Mana manaCost, Mana unitMana)
+    public static bool TryCosts(Mana manaCost, Mana unitMana)
     {
-        if (manaCost.count.Count == 0) return true;
-        
         bool result = false;
-        foreach (ManaType type in manaCost.count.Values)
+        if (manaCost.count.Count == 0) return true;
+        foreach (ManaType type in manaCost.count.Keys)
         {
             if (unitMana == null)
             {
@@ -92,6 +98,7 @@ public class Mana
                 if (unitMana.count[type] >= manaCost.count[type]) result = true;
                 else return false;
             }
+            else return false;
         }
         return result;
     }

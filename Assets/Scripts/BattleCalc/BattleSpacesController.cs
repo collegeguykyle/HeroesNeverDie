@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ public class BattleSpacesController
 {
     private List<Unit> PlayerTeam;
     private List<Unit> EnemyTeam;
-    private BattleSpace[,] battleSpaces = new BattleSpace[9,3];  //[row, col]
+    private BattleSpace[,] battleSpaces = new BattleSpace[9,5];  //[row, col]
     public BattleSpacesController(List<Unit> playerTeam, List<Unit> enemyTeam)
     {
         PlayerTeam = playerTeam;
@@ -27,7 +28,8 @@ public class BattleSpacesController
         {
             for (int j = 0; j < cols; j++)
             {
-                battleSpaces[i, j] = new BattleSpace(i, j);
+                battleSpaces[i, j] = new BattleSpace(i+1, j+1);
+
             }
         }
     }
@@ -319,20 +321,20 @@ public class BattleSpacesController
 
 public class BattleSpace : IComparable<BattleSpace>
 {
-    public float x;
-    public float y; //x and y used to get center point of the battle space in worldspace for moving characters around
+    [JsonIgnore] public float x;
+    [JsonIgnore] public float y; //x and y used to get center point of the battle space in worldspace for moving characters around
 
     public int row;
     public int col; // 1,1  1,2  1,3 
                     // 2,1  2,2  2,3
                     // 3,1  3,2  3,3
 
-    public BattleSpace PathParent;
-    public int F { get { return G + H; } } //F is the total cost of the node. F = G + H
-    public int G = 999; //G is the distance between the current node and the start node.
-    public int H = 999; //H is the heuristic — estimated distance from the current node to the end node.
+    [JsonIgnore] public BattleSpace PathParent;
+    [JsonIgnore] public int F { get { return G + H; } } //F is the total cost of the node. F = G + H
+    [JsonIgnore] public int G = 999; //G is the distance between the current node and the start node.
+    [JsonIgnore] public int H = 999; //H is the heuristic — estimated distance from the current node to the end node.
 
-    public IOccupyBattleSpace isInSpace;
+    [JsonIgnore] public IOccupyBattleSpace isInSpace;
 
     //Add stuff here for if the battle space is in zone of control for a Unit?
 

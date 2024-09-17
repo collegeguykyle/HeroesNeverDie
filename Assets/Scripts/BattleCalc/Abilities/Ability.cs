@@ -23,12 +23,6 @@ public abstract class Ability
         OwningUnitName = OwningUnit.Name;
     }
 
-    public bool TestManaCost(Mana ManaPool)
-    {
-        return Mana.TryCost(ManaPool, cost);
-
-    }
-
     public abstract void ExecuteAbility(ResultTargetting TargettingData);
 
 

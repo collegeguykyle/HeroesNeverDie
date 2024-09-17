@@ -7,6 +7,7 @@ using UnityEngine;
 
 public class ResultTargetting : ToReport
 {
+
     [JsonIgnore] public BattleSpacesController BattleSpacesController;
     [JsonIgnore] public IOccupyBattleSpace Caster;
     public BattleSpace CasterBattleSpace;
@@ -66,12 +67,13 @@ public class ResultTargetting : ToReport
 
 public class TargetData
 {
-    public IOccupyBattleSpace targetType;
+    [JsonIgnore]public IOccupyBattleSpace targetType;
     public string targetName;
     public BattleSpace BattleSpace;
     public int rangeTo;
     public int pathDist;
-    public List<IOccupyBattleSpace> OthersAOE;
+    [JsonIgnore]public List<IOccupyBattleSpace> OthersAOE;
+    //list of names of others in AOE
     public bool inRange = false;
     public bool TacticRequirement = false;
     public bool TacticPreference = false;

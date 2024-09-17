@@ -6,11 +6,48 @@ public class Dice
 {
     public string Name { get; private set; } = "Blank Die";
     public List<DieSide> Sides { get; private set; } = new List<DieSide>();
+    public void AddSide(DieSide side)
+    {
+        DieSide clone = new DieSide(side);
+        Sides.Add(clone);
+        clone.OwningDie = this;
+    }
+    public Dice() { }
+    public Dice(string name, DieSide side1, DieSide side2, DieSide side3, DieSide side4, DieSide side5, DieSide side6)
+    {
+        Name = name;
+        Sides.Add(side1);
+        Sides.Add(side2);
+        Sides.Add(side3);
+        Sides.Add(side4);
+        Sides.Add(side5);
+        Sides.Add(side6);
+    }
+}
 
+public static class BasicDice
+{
+    public static Dice Melee = new Dice("Basic Melee", 
+        BasicDieSides.Riposte1_1,
+        BasicDieSides.Melee1,
+        BasicDieSides.Melee1,
+        BasicDieSides.Defend1,
+        BasicDieSides.Defend1,
+        BasicDieSides.Blank);
+
+    public static Dice Ranged = new Dice("Basic Ranged",
+        BasicDieSides.Ranged2,
+        BasicDieSides.Ranged1,
+        BasicDieSides.Ranged1,
+        BasicDieSides.Defend1,
+        BasicDieSides.Defend1,
+        BasicDieSides.Blank);
 }
 
 public static class BasicDieSides
 {
+    public static DieSide Blank {  get; private set; } = new DieSide("Blank", ManaType.blank);
+
     public static DieSide Melee1 { get; private set; } = new DieSide("Melee 1", ManaType.sword);
     public static DieSide Melee2 { get; private set; } = new DieSide("Melee 2", ManaType.sword, 2);
     public static DieSide Melee3 { get; private set; } = new DieSide("Melee 3", ManaType.sword, 3);
@@ -32,4 +69,6 @@ public static class BasicDieSides
     public static DieSide Magic3 { get; private set; } = new DieSide("Magic 3", ManaType.magic, 3);
 
 }
+
+
 

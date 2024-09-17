@@ -134,7 +134,7 @@ public class S_Poison : Status, IReactStartTurn
     {
         if (unit != null && unit == Owner)
         {
-            Reaction reaction = new Reaction(this);
+            Reaction reaction = new Reaction(this, Owner);
 
             ResultDamage resultDamage = new ResultDamage(new Damage("Poison", DamageType.Nature, Stacks)); //deal 1 damage per stack
             reaction.AddResult(resultDamage);

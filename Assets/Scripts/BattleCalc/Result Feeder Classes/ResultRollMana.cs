@@ -18,6 +18,13 @@ public class ResultRollMana : ToReport
         {
             rolled.AddMana(side.Mana);
         }
+        if (modifiedSides.Count == 0)
+        {
+            foreach (DieSide side in rolledSides)
+            {
+                rolled.AddMana(side.Mana);
+            }
+        }
         return rolled;
     }
     public ResultRollMana(Unit Owner)

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using System;
+using Newtonsoft.Json;
 
 public class BattleReport
 {
@@ -20,7 +21,8 @@ public class BattleReport
 
     //really thats it, just need to log in order whenever something happens so the replay can then show the animations
     //for those things happening and update the UI and on screen battle log.
-
+    public int TotalTurns;
+    public Team Victors;
     private List<Unit> PlayerTeam;
     private List<Unit> EnemyTeam;
 
@@ -43,20 +45,35 @@ public abstract class ToReport : EventArgs
     
 }
 
+public class ReportMessage : ToReport
+{
+    public string message;
+    public ReportMessage(string message)
+    {
+        this.message = message;
+    }
+}
+
 public class ReportStartTurn : ToReport
 {
-    public Unit unit;
+    [JsonIgnore] public Unit unit;
+    public string unitName;
     public ReportStartTurn(Unit unit)
     {
         this.unit = unit;
+        unitName = unit.Name;
     }
 }
 public class ReportEndTurn : ToReport
 {
-    public Unit unit;
+    [JsonIgnore] public Unit unit;
+    public string unitName;
+    //manaLost
+    //manaRetained
     public ReportEndTurn(Unit unit)
     {
         this.unit = unit;
+        unitName = unit.Name;
     }   
 }
 

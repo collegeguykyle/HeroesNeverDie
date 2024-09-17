@@ -19,8 +19,12 @@ public class Battle
     public ReactionsManager Reactions { get; private set; } 
     public Unit CurrentUnit { get; private set; }
     private bool BattleOver = false;
+    int battleSafeGuard = 0;
     private List<Engagement> Engagements = new List<Engagement>();
     private Stack<Action> ActionsStack = new Stack<Action>();
+    private ResultAbility currentAbility;
+
+#region Constructors
 
     public Battle(List<Unit> playerTeam, List<Unit> enemyTeam)
     {
@@ -42,21 +46,26 @@ public class Battle
         Reactions.UnitDeath += TestBattleOver;
         BattleLoop();
     }
-    private ResultAbility currentAbility;
+    
+
+    #endregion 
 
 #region Core Game Play Loop
 
     private void BattleLoop()
     {
-        int battleSafeGuard = 0;
+        
         while (BattleOver == false)
         {
             CurrentUnit = TurnOrder.GetCurrentUnit();  //Turn Order advances to next unit in End Unit Turn step
             TakeUnitTurn();
             battleSafeGuard++;
-            if (battleSafeGuard > 999)
+            if (battleSafeGuard > 100)
             {
+                BattleReport.AddReport(new ReportMessage($"BATTLE ENDED via battelSafeGuard, over 999 turns executed with no victor"));
                 Debug.Log($"BATTLE ENDED via battelSafeGuard, over 999 turns executed with no victor");
+                EndBattle(Team.neutral);
+
             }
         }
     }
@@ -64,8 +73,18 @@ public class Battle
     private void TakeUnitTurn()
     {
         BattleReport.AddReport(new ReportStartTurn(CurrentUnit));
-        Reactions.SendStartUnitTurn(CurrentUnit); 
-        CurrentUnit.RollManaDice(); //1: Unit rolls mana
+        Reactions.SendStartUnitTurn(CurrentUnit);
+
+        CurrentUnit.CurrentMove = CurrentUnit.MaxMove;
+
+        ResultRollMana result = CurrentUnit.RollManaDice(); //1: Unit rolls mana
+        Reactions.SendManaDieRolled(result);
+        BattleReport.AddReport(result);
+        CurrentUnit.Mana.AddMana(result.TotalMana());
+        CurrentUnit.Mana.ReportMana(BattleReport);
+        CurrentUnit.Mana.AddMana(result.TotalMana());
+        
+
         List<Tactic> Tactics = CurrentUnit.Tactics;
         //2: itterate through unit's tactics in order of priority until we find one that can be used, and use it
         //if we use an abiltiy, repeat the process. Can use any number of abilities on a turn if mana remains
@@ -75,20 +94,42 @@ public class Battle
         int turnSafeGuard = 0; //pass the turn after X iterations through the tactic to avoid accidental infinite loops 
         do 
         {
+            BattleReport.AddReport(new ReportMessage("Starting Tactics Eval Loop"));
             passTurn = true;
             foreach (Tactic tactic in Tactics)
             {
-                bool TacticUsed = tactic.TestTactic(this, SpaceController, CurrentUnit.Mana);
-                if (TacticUsed)
+                BattleReport.AddReport(new ReportMessage("Testing Tactic:  " + tactic.Ability.Name ));
+                //3-5: Are basic requirements to use the tactic met? Unit alive, enough mana, etc
+                tactic.resultTargetting = null;
+                tactic.TacticSelected = false;
+
+                bool basicConditions = tactic.BasicConditionsMet(this, CurrentUnit.Mana);
+                if (!basicConditions) 
+                { 
+                    BattleReport.AddReport(tactic);
+                    continue;
+                }
+                //6-10: Do tactic conditions allow for use?
+                ResultTargetting resultT = tactic.TestTactic(this, SpaceController, CurrentUnit.Mana);
+                if (tactic.TacticSelected)
                 {
                     passTurn = false;
-                    break;
+                    Reactions.SendTargeting(resultT);
+                    BattleReport.AddReport(tactic);
+                    AbilitySelected(tactic.Ability, resultT);
+                    tactic.Ability.ExecuteAbility(resultT);
+                    continue;
+                }
+                else
+                {
+                    BattleReport.AddReport(tactic);
                 }
             }
             turnSafeGuard++;
             if (turnSafeGuard > 20)
             {
                 passTurn = true;
+                BattleReport.AddReport(new ReportMessage($"{CurrentUnit} itterated over its tactics pool 20 times but did not pass turn. Safeguard activated"));
                 Debug.Log($"{CurrentUnit} itterated over its tactics pool 20 times but did not pass turn. Safeguard activated");
             }
         } while (!passTurn);
@@ -142,6 +183,8 @@ public class Battle
         BattleOver = true;
         Reactions.Dispose();
         BattleReport.AddReport(currentAbility);
+        BattleReport.TotalTurns = battleSafeGuard;
+        BattleReport.Victors = victors;
         BattleReport.AddReport(new ReportEndBattle(victors));
     }
 
@@ -240,7 +283,6 @@ public class Battle
 
 #endregion
 
-
 #region Engagements
 
     public void AddEngagement(Unit Attacker, Unit Victim)
@@ -267,7 +309,6 @@ public class Battle
     }
 
     #endregion
-
 
 }
 
