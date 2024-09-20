@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 
 public class Melee1 : Ability, IHit, IDealDamage
@@ -7,7 +8,7 @@ public class Melee1 : Ability, IHit, IDealDamage
 
     public override string Name { get; protected set; } = "Test Melee 1";
     public override Mana cost { get; protected set; } = new Mana();
-    public override int Range { get; protected set; } = 10; //should this be 10 for orthoganol and 15 for diaganol?? Check BattleSpaceController
+    public override int Range { get; protected set; } = 15; //should this be 10 for orthoganol and 15 for diaganol?? Check BattleSpaceController
     public override bool UseEngaged { get; protected set; } = true;
     public override Team targets { get; protected set; } = Team.enemy;
 
@@ -55,7 +56,7 @@ public class Melee2 : Ability, IHit, IDealDamage
 
     public override string Name { get; protected set; } = "Big Melee";
     public override Mana cost { get; protected set; } = new Mana();
-    public override int Range { get; protected set; } = 10; //should this be 10 for orthoganol and 15 for diaganol?? Check BattleSpaceController
+    public override int Range { get; protected set; } = 15; //should this be 10 for orthoganol and 15 for diaganol?? Check BattleSpaceController
     public override bool UseEngaged { get; protected set; } = true;
     public override Team targets { get; protected set; } = Team.enemy;
 
@@ -116,6 +117,7 @@ public class MoveBasic : Ability, IMoveSelf
 
     public override void ExecuteAbility(ResultTargetting TargettingData)
     {
+        Debug.Log(OwningUnit + " trying to move");
         ResultMovement result = ResultMovement.MoveUnitTowards(OwningUnit, TargettingData.getTargetData().BattleSpace, MoveType.Walk);
         OwningUnit.Battle.AddToActionStack(result, this, TargettingData.SelectedTarget);
     }

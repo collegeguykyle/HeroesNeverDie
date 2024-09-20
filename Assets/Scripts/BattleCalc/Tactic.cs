@@ -4,16 +4,18 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 
 
-public class Tactic : ToReport
+public class Tactic
 {
-    
+    //This class is a primary owner of the AI decision tree for determining when abiltiies will be used
+    //and who they will target based on the player input conditions for the ability with the
+    //associated tactic slots. It feeds results back to the battle calculator to send out to the event
+    //system and then communicate to the ability code to execute the ability's actions
+
     [JsonIgnore] public Unit Owner { get; private set; }
     public Ability Ability { get; private set; }
     public TCondition Condition1 { get; private set; }
     public TCondition Condition2 { get; private set; }
     public BasicConditions ConditionsCheck { get; private set; }
-    public List<TargetEval> targetEvals { get; private set; }
-    public bool TacticSelected { get; private set; } = false;
 
     public Tactic(Unit owner, Ability ability, TCondition condition1, TCondition condition2)
     {
@@ -23,16 +25,10 @@ public class Tactic : ToReport
         Condition2 = condition2;
     }
 
-    public void TacticReset()
-    {
-        TacticSelected = false;
-        targetEvals = new List<TargetEval>();
-        TacticSelected = false;
-    }
-
     public ResultTargetting TestTactic(Battle battleController, List<TargetData> dataList, Mana AvailableMana, Engagements engages)
     {
-        targetEvals = new List<TargetEval>();
+        
+        List<TargetEval> targetEvals = new List<TargetEval>();
         Dictionary<TargetEval, TargetData> dataPairs = new Dictionary<TargetEval, TargetData>();
         //Filter target list down to those this ability can target
         foreach (TargetData data in dataList)
@@ -45,23 +41,61 @@ public class Tactic : ToReport
                 dataPairs.Add(newEval, data);
             }
         }
+        ResultTargetting result = new ResultTargetting(Ability, dataPairs);
+        if (targetEvals.Count == 0)
+        {
+            result.AnyOptions = false;
+            return result;
+        }
+        else result.AnyOptions = true;
+        
 
         //6: Can unit target an enemy with it from where it is?
+        bool AnyInRange = false;
         foreach (TargetEval eval in targetEvals) 
         {
             TargetData data = dataPairs[eval];
-            if (data.rangeTo <= Ability.Range || Ability is IMoveSelf) eval.inRange = true;
+            if (data.rangeTo <= Ability.Range || Ability is IMoveSelf) 
+            { 
+                eval.inRange = true; 
+                AnyInRange = true;
+            }
             else eval.inRange = false;
         }
-        if (targetEvals.Count == 0) return null;
+        if (!AnyInRange)
+        {
+            result.AnyInRange = false;
+            return result;
+        }
+        else result.AnyInRange = true;
 
         //7: If a mandatory target condition, ensure options meets requirement
+        bool AnyMeetRequirements = false;
         foreach (TargetEval eval in targetEvals) 
         {
-            if (TestTargetRequirements(Condition1, eval.target, dataList)) eval.TacticRequirement = true; else eval.TacticRequirement = false;
-            if (TestTargetRequirements(Condition2, eval.target, dataList)) eval.TacticRequirement = true; else eval.TacticRequirement = false;
+            if (TestTargetRequirements(Condition1, eval.target, dataList))
+            {
+                eval.TacticRequirement = true;
+                AnyMeetRequirements = true;
+            }
+            else eval.TacticRequirement = false;
+            if (TestTargetRequirements(Condition2, eval.target, dataList))
+            {
+                eval.TacticRequirement = true;
+                AnyMeetRequirements |= true;
+            }
+            else eval.TacticRequirement = false;
         }
-        if (targetEvals.Count == 0) return null;
+        if (!AnyMeetRequirements)
+        {
+            result.AnyRequirements = false;
+            return result;
+        }
+        else result.AnyRequirements = true;
+
+        //If made it to this point at least one target meets all requirements and the tactic
+        //will be used, from here we decide which target of those that are options will be chosen
+        result.TacticSelected = true;
 
         //8: Mark targets as priority based on conditional preferences
         TestTargetPrefernce(Condition1, targetEvals, engages);
@@ -81,20 +115,20 @@ public class Tactic : ToReport
                 choice = eval;
                 highP = eval.PriorityScore;
             }
-            choice.TacticSelected = true;
+            choice.targetSelected = true;
         }
 
         //9.2: If still a tie between two targets, choose closest, then randomly --OR-- ability has prefered Selector if player does not input one
         //TestTargetSelector(TCondition.Closest, evals, dataPairs);
+        result.SelectTarget(choice);
 
         //*****10: Execute the ability against the chosen target*****
-        TacticSelected = true;
-        return new ResultTargetting(Ability, choice, dataPairs);
+        return result;
 
     }
 
 
-    public bool BasicConditionsMet(Battle battleController,  Mana AvailableMana, Engagements engages)
+    public BasicConditions BasicConditionsMet(Battle battleController,  Mana AvailableMana, Engagements engages)
     {
         ConditionsCheck = new BasicConditions();
         if (Owner.CurrentHP <= 0) ConditionsCheck.UnitAlive = false;                 //Unit still alive?
@@ -108,8 +142,8 @@ public class Tactic : ToReport
         if (engaged && !Ability.UseEngaged) ConditionsCheck.EngagedLimited = false;        //if unit is engaged can this ability be used?
 
         if (Ability is IMoveSelf && Owner.CurrentMove < 1) ConditionsCheck.MovePoints = false; //if move ability and no movement points
-        
-        return ConditionsCheck.AllConditionsMet();
+
+        return ConditionsCheck;
     }
 
     private Team TargetConversion(Unit unit, Team target)
@@ -219,7 +253,7 @@ public class Tactic : ToReport
     {
         if (targets.Count == 1)
         {
-            targets[0].TacticSelected = true;
+            targets[0].targetSelected = true;
             return;
         }
         TargetEval choice;
@@ -312,7 +346,7 @@ public class TargetEval
     public bool TacticPreference = false;
     public bool TacticPriority = false;
     public int PriorityScore = 0;
-    public bool TacticSelected = false;
+    public bool targetSelected = false;
 
     public TargetEval(IOccupyBattleSpace target)
     {

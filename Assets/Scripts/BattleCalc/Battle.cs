@@ -92,6 +92,7 @@ public class Battle
         int turnSafeGuard = 1; //pass the turn after X iterations through the tactic to avoid accidental infinite loops 
         do 
         {
+            if (currentAbility != null) AbilityClose(currentAbility);
             BattleReport.AddReport(new ReportMessage("Starting Tactics Eval Loop: " + turnSafeGuard));
             passTurn = true;
             List<TargetData> targetsData = SpaceController.GetTargets(CurrentUnit);
@@ -101,30 +102,31 @@ public class Battle
             foreach (Tactic tactic in Tactics)
             {
                 BattleReport.AddReport(new ReportMessage("Testing Tactic:  " + tactic.Ability.Name ));
-                tactic.TacticReset();
 
                 //3-5: Are basic requirements to use the tactic met? Unit alive, enough mana, etc
-                bool basicConditions = tactic.BasicConditionsMet(this, CurrentUnit.Mana, engagements);
-                if (!basicConditions) 
+                BasicConditions conditions = tactic.BasicConditionsMet(this, CurrentUnit.Mana, engagements);
+                if (!conditions.AllConditionsMet()) 
                 { 
-                    BattleReport.AddReport(tactic);
+                    BattleReport.AddReport(new ResultTargetting(tactic.Ability, conditions));
                     continue;
                 }
 
                 //6-10: Do tactic conditions allow for use?
                 ResultTargetting resultT = tactic.TestTactic(this, targetsData, CurrentUnit.Mana, engagements);
-                if (tactic.TacticSelected)
+                resultT.conditions = conditions;
+                //*****10: Execute the ability against the chosen target*****
+                if (resultT.TacticSelected) // <----- I AM HERE: Need completely different Tactic eval system for move abilities??
                 {
                     passTurn = false;
                     Reactions.SendTargeting(resultT);
-                    BattleReport.AddReport(tactic);
+                    BattleReport.AddReport(resultT);
                     AbilitySelected(tactic.Ability, resultT);
                     tactic.Ability.ExecuteAbility(resultT);
-                    continue;
+                    break;
                 }
                 else
                 {
-                    BattleReport.AddReport(tactic);
+                    BattleReport.AddReport(resultT);
                 }
             }
             turnSafeGuard++;
@@ -151,10 +153,16 @@ public class Battle
     {
         if (currentAbility != null) BattleReport.AddReport(currentAbility);
         currentAbility = new ResultAbility(CurrentUnit, ability);
+        CurrentUnit.Mana.RemoveMana(ability.cost);
     }
     public void AbilityComplete(ResultAbility result)
     {
         Reactions.SendAbilityComplete(result);
+        BattleReport.AddReport(currentAbility);
+        currentAbility = null;
+    }
+    public void AbilityClose(ResultAbility result)
+    {
         BattleReport.AddReport(currentAbility);
         currentAbility = null;
     }
@@ -204,6 +212,7 @@ public class Battle
 
         while (ActionsStack.Count > 0)
         {
+            Debug.Log("resolving Action stack: " + ActionsStack.Count);
             ResolveAction(ActionsStack.Pop());
         }
     }
@@ -279,7 +288,9 @@ public class Battle
         if (result.validPath && result.moveDist <= result.unitMoved.CurrentMove)
         {
             SpaceController.MoveUnitTo(result.unitMoved, result.moveToSpace);
+            result.unitMoved.CurrentMove -= result.moveDist;
         }
+        else BattleReport.AddReport(new ReportMessage("Movement tried to resolve but something went wrong"));
     }
 
 

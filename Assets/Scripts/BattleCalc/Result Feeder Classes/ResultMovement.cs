@@ -13,7 +13,7 @@ public class ResultMovement : ActionResult
     public BattleSpace moveToSpace;
     public int moveDist = 0;
     public bool validPath = true;
-
+    public List<BattleSpace> _path = new List<BattleSpace>();
 
     public static ResultMovement MoveUnitTowards(Unit unit, BattleSpace to, MoveType type)
     {
@@ -23,7 +23,7 @@ public class ResultMovement : ActionResult
         result.moveType = type;
 
         List<BattleSpace> path = unit.Battle.SpaceController.CalculatePath(unit, to);
-        
+        result._path = path;
         if (path != null && path.Count > 1)
         {
             result.startSpace = path[0];

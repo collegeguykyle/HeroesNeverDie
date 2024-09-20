@@ -251,7 +251,9 @@ public class BattleSpacesController
                     openNode = openNode.PathParent;
                     nodePath.Add(openNode);
                 }
-                nodePath.Sort(); //path was backwards, this should reverse the path to be start to goal
+                nodePath.Reverse(); //path was backwards, this should reverse the path to be start to goal
+                
+                
                 return nodePath;
             }
             
