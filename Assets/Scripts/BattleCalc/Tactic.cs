@@ -1,17 +1,19 @@
 using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 
 public class Tactic : ToReport
 {
-    public bool TacticSelected = false;
-    [JsonIgnore] private Unit Owner;
+    
+    [JsonIgnore] public Unit Owner { get; private set; }
     public Ability Ability { get; private set; }
     public TCondition Condition1 { get; private set; }
     public TCondition Condition2 { get; private set; }
     public BasicConditions ConditionsCheck { get; private set; }
-    public ResultTargetting resultTargetting { get; set; }
+    public List<TargetEval> targetEvals { get; private set; }
+    public bool TacticSelected { get; private set; } = false;
 
     public Tactic(Unit owner, Ability ability, TCondition condition1, TCondition condition2)
     {
@@ -21,42 +23,78 @@ public class Tactic : ToReport
         Condition2 = condition2;
     }
 
-    public ResultTargetting TestTactic(Battle battleController, BattleSpacesController map, Mana AvailableMana)
+    public void TacticReset()
     {
+        TacticSelected = false;
+        targetEvals = new List<TargetEval>();
+        TacticSelected = false;
+    }
+
+    public ResultTargetting TestTactic(Battle battleController, List<TargetData> dataList, Mana AvailableMana, Engagements engages)
+    {
+        targetEvals = new List<TargetEval>();
+        Dictionary<TargetEval, TargetData> dataPairs = new Dictionary<TargetEval, TargetData>();
+        //Filter target list down to those this ability can target
+        foreach (TargetData data in dataList)
+        {
+            if (data == null) continue;
+            if (data.targetTeam == TargetConversion(Owner, Ability.targets)) 
+            {
+                TargetEval newEval = new TargetEval(data.target);
+                targetEvals.Add(newEval);
+                dataPairs.Add(newEval, data);
+            }
+        }
+
         //6: Can unit target an enemy with it from where it is?
-        resultTargetting = map.GetTargets(Ability); 
-        if (!resultTargetting.TargetInRange()) return resultTargetting;
+        foreach (TargetEval eval in targetEvals) 
+        {
+            TargetData data = dataPairs[eval];
+            if (data.rangeTo <= Ability.Range || Ability is IMoveSelf) eval.inRange = true;
+            else eval.inRange = false;
+        }
+        if (targetEvals.Count == 0) return null;
 
         //7: If a mandatory target condition, ensure options meets requirement
-        foreach (TargetData target in resultTargetting.Targets) 
+        foreach (TargetEval eval in targetEvals) 
         {
-            if (TestTargetRequirements(Condition1, target.targetType, map)) target.TacticRequirement = true; else target.TacticRequirement = false;
-            if (TestTargetRequirements(Condition2, target.targetType, map)) target.TacticRequirement = true; else target.TacticRequirement = false;
+            if (TestTargetRequirements(Condition1, eval.target, dataList)) eval.TacticRequirement = true; else eval.TacticRequirement = false;
+            if (TestTargetRequirements(Condition2, eval.target, dataList)) eval.TacticRequirement = true; else eval.TacticRequirement = false;
         }
-        if (resultTargetting.TargetInRange()) return resultTargetting;
+        if (targetEvals.Count == 0) return null;
 
-        //8: Filter out options based on condition priorities
-        resultTargetting = TestTargetPrefernce(Condition1, resultTargetting, battleController);
-        resultTargetting = TestTargetPrefernce(Condition2, resultTargetting, battleController);
+        //8: Mark targets as priority based on conditional preferences
+        TestTargetPrefernce(Condition1, targetEvals, engages);
+        TestTargetPrefernce(Condition2, targetEvals, engages);
 
         //9.1: If one of the conditions is a selector, use it to select the final target
-        resultTargetting = TestTargetSelector(Condition1, resultTargetting, map);        
-        resultTargetting = TestTargetSelector(Condition2, resultTargetting, map);
+        TestTargetSelector(Condition1, targetEvals, dataPairs);        
+        TestTargetSelector(Condition2, targetEvals, dataPairs);
 
-        //9.2: If no final selector condition, choose closest, then randomly --OR-- ability has prefered Selector if player does not input one
-        if (resultTargetting.SelectedTargetData == null) resultTargetting = TestTargetSelector(TCondition.Closest, resultTargetting, map);
+        //9.2: Evaluate targets to see if one has highest priority
+        int highP = 0;
+        TargetEval choice = targetEvals[0];
+        foreach (TargetEval eval in targetEvals)
+        {
+            if (eval.PriorityScore > highP && eval.inRange && eval.TacticRequirement)
+            {
+                choice = eval;
+                highP = eval.PriorityScore;
+            }
+            choice.TacticSelected = true;
+        }
 
-        //10.1: If still no target selection then nothing to target, so return false, else broadcast target data to reactions
-        if (resultTargetting.SelectedTargetData == null) return resultTargetting;
+        //9.2: If still a tie between two targets, choose closest, then randomly --OR-- ability has prefered Selector if player does not input one
+        //TestTargetSelector(TCondition.Closest, evals, dataPairs);
 
         //*****10: Execute the ability against the chosen target*****
         TacticSelected = true;
-        return resultTargetting;
+        return new ResultTargetting(Ability, choice, dataPairs);
 
     }
 
 
-    public bool BasicConditionsMet(Battle battleController,  Mana AvailableMana)
+    public bool BasicConditionsMet(Battle battleController,  Mana AvailableMana, Engagements engages)
     {
         ConditionsCheck = new BasicConditions();
         if (Owner.CurrentHP <= 0) ConditionsCheck.UnitAlive = false;                 //Unit still alive?
@@ -66,7 +104,7 @@ public class Tactic : ToReport
         if (!TestSelfCondition(Condition1)) ConditionsCheck.Condition1Exclusionary = false;
         if (!TestSelfCondition(Condition2)) ConditionsCheck.Condition2Exclusionary = false;        //any exlusionary conditions?
 
-        bool engaged = battleController.TestEngaged(Owner);
+        bool engaged = engages.TestEngaged(Owner);
         if (engaged && !Ability.UseEngaged) ConditionsCheck.EngagedLimited = false;        //if unit is engaged can this ability be used?
 
         if (Ability is IMoveSelf && Owner.CurrentMove < 1) ConditionsCheck.MovePoints = false; //if move ability and no movement points
@@ -117,14 +155,15 @@ public class Tactic : ToReport
     
     }
 
-    private bool TestTargetRequirements(TCondition condition, IOccupyBattleSpace target, BattleSpacesController map) //return true if conditions allow use, false if not
+    private bool TestTargetRequirements(TCondition condition, IOccupyBattleSpace target, List<TargetData> dataList) //return true if conditions allow use, false if not
     {
-        if (target is Unit && (target as Unit).CurrentHP <= 0) return false;
-        BattleSpace center;
+        if (target is Unit && (target as Unit).CurrentHP <= 0) return false; //target must be alive (may need to edit later if want to target corpses)
+        //BattleSpace center;
         switch (condition)
         {
             case TCondition.None:
                 return true;
+                /* REFACTOR THE AOE CONDITIONS WITH AOE SHAPE TYPES, ETC
             case TCondition.Hit2:
                 center = map.GetSpaceOf(target);
                 if (map.GetTargetsInRange(center.row, center.col, Ability.Range, target.Team, false).Count >= 2) return true;
@@ -137,62 +176,61 @@ public class Tactic : ToReport
                 center = map.GetSpaceOf(target);
                 if (map.GetTargetsInRange(center.row, center.col, Ability.Range, target.Team, false).Count >= 4) return true;
                 else return false;
+                */
         }
         
         return true;
     }
 
-    private ResultTargetting TestTargetPrefernce(TCondition condition, ResultTargetting targets, Battle BC)
+    private void TestTargetPrefernce(TCondition condition, List<TargetEval> targets, Engagements engages)
     {
         switch (condition)
         {
             case TCondition.Engaged:
-                foreach(TargetData target in targets.Targets)
+                foreach(TargetEval target in targets)
                 {
-                    if (target.targetType is Unit)
+                    if (target.target is Unit)
                     {
-                        if (BC.TestEngaged(target.targetType as Unit))
+                        if (engages.TestEngaged(target.target as Unit))
                         {
                             target.TacticPreference = true;
                             target.PriorityScore++;
-                            if (!targets.PriorityList.Contains(target)) targets.PriorityList.Add(target);
                         }
                     }
                 }
                 break;
             case TCondition.NotEngaged:
-                foreach (TargetData target in targets.Targets)
+                foreach (TargetEval target in targets)
                 {
-                    if (target.targetType is Unit)
+                    if (target.target is Unit)
                     {
-                        if (!BC.TestEngaged(target.targetType as Unit))
+                        if (!engages.TestEngaged(target.target as Unit))
                         {
                             target.TacticPreference = true;
                             target.PriorityScore++;
-                            if (!targets.PriorityList.Contains(target)) targets.PriorityList.Add(target);
                         }
                     }
                 }
                 break;
         }
-        return targets;
     }
 
-    private ResultTargetting TestTargetSelector(TCondition condition1, ResultTargetting targets, BattleSpacesController map) //player can only choose one selector as they can only ever return one choice from a list of options
+    private void TestTargetSelector(TCondition condition1, List<TargetEval> targets, Dictionary<TargetEval, TargetData> dataDict) //player can only choose one selector as they can only ever return one choice from a list of options
     {
-        List<TargetData> targetsList = new List<TargetData>();
-        if (targets.PriorityList.Count > 0) targetsList = targets.PriorityList;
-        else targetsList = targets.Targets;
-        TargetData choice = new TargetData();
+        if (targets.Count == 1)
+        {
+            targets[0].TacticSelected = true;
+            return;
+        }
+        TargetEval choice;
         switch (condition1)
         {
             case TCondition.HighestMaxHP:
-                choice = null;
                 int HighHP = 0;
-                foreach (TargetData target in targets.Targets)
+                foreach (TargetEval target in targets)
                 {
                     int HP = 0;
-                    if (target.targetType is Unit) HP = (target.targetType as Unit).MaxHP;
+                    if (target.target is Unit) HP = (target.target as Unit).MaxHP;
                     if (HP > HighHP)
                     {
                         HighHP = HP;
@@ -201,15 +239,13 @@ public class Tactic : ToReport
                         choice = target;
                     }
                 }
-                targets.SetSelectedTarget(choice);
                 break;
             case TCondition.LowestMaxHP:
-                choice = null;
                 int LowHP = 0;
-                foreach (TargetData target in targets.Targets)
-                {
+                foreach (TargetEval target in targets)
+                    {
                     int HP = 9999;
-                    if (target.targetType is Unit) HP = (target.targetType as Unit).MaxHP;
+                    if (target.target is Unit) HP = (target.target as Unit).MaxHP;
                     if (HP < LowHP)
                     {
                         LowHP = HP;
@@ -218,15 +254,13 @@ public class Tactic : ToReport
                         choice = target;
                     }
                 }
-                targets.SetSelectedTarget(choice);
                 break;
             case TCondition.HighestCurrentHP: 
-                choice = null;
                 HighHP = 0;
-                foreach (TargetData target in targets.Targets)
+                foreach (TargetEval target in targets)
                 {
                     int HP = 0;
-                    if (target.targetType is Unit) HP = (target.targetType as Unit).CurrentHP;
+                    if (target.target is Unit) HP = (target.target as Unit).CurrentHP;
                     if (HP > HighHP)
                     {
                         HighHP = HP;
@@ -235,15 +269,13 @@ public class Tactic : ToReport
                         choice = target;
                     }
                 }
-                targets.SetSelectedTarget(choice);
                 break;
             case TCondition.LowestCurrentHP: 
-                choice = null;
                 LowHP = 9999;
-                foreach (TargetData target in targets.Targets)
+                foreach (TargetEval target in targets)
                 {
                     int HP = 9999;
-                    if (target.targetType is Unit) HP = (target.targetType as Unit).CurrentHP;
+                    if (target.target is Unit) HP = (target.target as Unit).CurrentHP;
                     if (HP < LowHP)
                     {
                         LowHP = HP;
@@ -252,25 +284,40 @@ public class Tactic : ToReport
                         choice = target;
                     }
                 }
-                targets.SetSelectedTarget(choice);
                 break;
             case TCondition.Closest:
-                choice = null;
                 int lowDist = 999;
-                foreach (TargetData target in targets.Targets)
+                foreach (TargetEval target in targets)
                 {
-                    if (target.rangeTo < lowDist)
+                    TargetData data = dataDict[target];
+                    if (data.rangeTo < lowDist)
                     {
-                        lowDist = target.rangeTo;
+                        lowDist = data.rangeTo;
                         target.PriorityScore += 2;
                         target.TacticPriority = true;
                         choice = target;
                     }
                 }
-                targets.SetSelectedTarget(choice);
                 break;
         }
-        return targets;
+    }
+}
+
+public class TargetEval
+{
+    [JsonIgnore] public IOccupyBattleSpace target;
+    public string targetName;
+    public bool inRange = false;
+    public bool TacticRequirement = false;
+    public bool TacticPreference = false;
+    public bool TacticPriority = false;
+    public int PriorityScore = 0;
+    public bool TacticSelected = false;
+
+    public TargetEval(IOccupyBattleSpace target)
+    {
+        this.target = target;
+        this.targetName = target.Name;
     }
 }
 

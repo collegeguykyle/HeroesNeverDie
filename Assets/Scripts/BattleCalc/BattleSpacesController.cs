@@ -15,6 +15,8 @@ public class BattleSpacesController
         PlayerTeam = playerTeam;
         EnemyTeam = enemyTeam;
         CreateBattleSpaces();
+        PlaceEnemyTeam(enemyTeam);
+        PlacePlayerTeam(playerTeam);
     }
 
 #region Controller Setup
@@ -43,7 +45,7 @@ public class BattleSpacesController
         }
         else
         {
-            battleSpaces[space.row, space.col].isInSpace = entity;
+            battleSpaces[space.row -1, space.col -1].isInSpace = entity;
             return true;
         }
     }
@@ -57,8 +59,10 @@ public class BattleSpacesController
         //the enemy team needs to be rotated around and then placed in the top 3 rows
         foreach (Unit unit in enemyTeam)
         {
-            if (unit.StartingCol == 1) unit.StartingCol = 3;
-            else if (unit.StartingCol == 3) unit.StartingCol = 1;
+            if (unit.StartingCol == 1) unit.StartingCol = 5;
+            else if (unit.StartingCol == 2) unit.StartingCol = 4;
+            else if (unit.StartingCol == 4) unit.StartingCol = 2;
+            else if (unit.StartingCol == 5) unit.StartingCol = 1;
             if (unit.StartingRow == 1) unit.StartingRow = 3;
             else if (unit.StartingRow == 3) unit.StartingRow = 1;
 
@@ -101,6 +105,7 @@ public class BattleSpacesController
     }
     public BattleSpace GetBattleSpaceAt(int Row, int Col)
     {
+        if(Row < 1 || Row > 9 || Col < 1 || Col > 5) return null;
         if (battleSpaces[Row - 1, Col - 1] == null) return null;
         else return battleSpaces[Row - 1, Col - 1];
     }
@@ -138,24 +143,24 @@ public class BattleSpacesController
         return targets;
     }
 
-    public ResultTargetting GetTargets(Ability ability)
+    public List<TargetData> GetTargets(Unit unit)
     {
-        BattleSpace castFrom = GetSpaceOf(ability.OwningUnit);
-        ResultTargetting result = new ResultTargetting(ability, castFrom, this);
-        
-        List<Unit> targetOptions; 
-        Team t = TargetConversion(ability.OwningUnit, ability.targets);
-        if (t == Team.player) targetOptions = PlayerTeam;
-        else targetOptions = EnemyTeam;                     //***TODO***Currently no way implimented to target terrain or nuetrals
+        BattleSpace castFrom = GetSpaceOf(unit);
+        List<TargetData> result = new List<TargetData>();
+
+        List<Unit> targetOptions = new List<Unit>();
+        foreach(Unit u in PlayerTeam) targetOptions.Add(u);
+        foreach(Unit u in EnemyTeam) targetOptions.Add(u);
+        //***TODO***Currently no way implimented to target terrain or nuetrals
         
         foreach (Unit target in targetOptions)
         {
-            TargetData data = new TargetData();
-            data.targetType = target;
-            data.BattleSpace = GetSpaceOf(target);
-            data.rangeTo = CalculateDistance(castFrom.row, castFrom.col, data.BattleSpace.row, data.BattleSpace.col);
-            if (data.rangeTo <= ability.Range) data.inRange = true;
-            result.AddTargetData(data);
+            BattleSpace space = GetSpaceOf(target);
+            int rangeTo = CalculateDistance(castFrom.row, castFrom.col, space.row, space.col);
+            List<BattleSpace> path = CalculatePath(unit, target);
+            
+            TargetData data = new TargetData(target, space, rangeTo, path.Count);
+            result.Add(data);
         }
         return result;
     }
@@ -199,26 +204,50 @@ public class BattleSpacesController
 
         BattleSpace StartNode = GetBattleSpaceAt(rowStart, colStart);
         BattleSpace GoalNode = GetBattleSpaceAt(rowGoal, colGoal);
-        if (StartNode == null || GoalNode == null) return null;
+        if (StartNode == null)
+        {
+            Debug.Log("PathFind failed due to no BattleSpace found at Row: " + rowStart + ", Col: " + colStart);
+            return null;
+        }
+        if (GoalNode == null)
+        {
+            Debug.Log("PathFind failed due to no BattleSpace found at Row: " + rowStart + ", Col: " + colStart);
+            return null;
+        }
 
         ResetPathfindingScores();
         StartNode.G = 0;
         StartNode.H = 0;
         openList.Add(StartNode);
+        int failsafe = 0;
 
         while (openList.Count > 0)
         {
+            failsafe++;
+            if (failsafe > 75) //infinite loop protection
+            {
+                Debug.Log("Pathfind failsafe activated");
+                return null;
+            }
+
             openList.Sort();
             BattleSpace openNode = openList[0];
-            openList.RemoveAt(0);
             closedList.Add(openNode);
+            openList.RemoveAt(0);
 
             if (openNode == GoalNode) //Found the end, calculate the path
             {
                 List<BattleSpace> nodePath = new List<BattleSpace>();
                 nodePath.Add(openNode);
+                int pathFailSafe = 0;
                 while (openNode != StartNode)
                 {
+                    pathFailSafe++;
+                    if (pathFailSafe > 25)
+                    {
+                        Debug.Log("Pathfind Failsafe activated at the path found stage");
+                        return null;
+                    }
                     openNode = openNode.PathParent;
                     nodePath.Add(openNode);
                 }
@@ -230,26 +259,28 @@ public class BattleSpacesController
             
             foreach(BattleSpace child in children)
             {
-                if (closedList.Contains(child)) break;
-                if (child.isInSpace != null) //add a space to the closed list if there is something in it
+                if (closedList.Contains(child)) continue;
+                if (child.isInSpace != null && child != GoalNode) //add a space to the closed list if there is something in it
                 {
                     closedList.Add(child);
-                    break;
+                    continue;
                 }
                 int G = openNode.G + 10;
                     if (child.row != openNode.row && child.col != openNode.col) G += 5; //diaganols cost 15
                 int H = CalculateDistance(child.row, child.col, GoalNode.row, GoalNode.col); //distance between child and goal
 
-                if (openList.Contains(child) && G > child.G) break;
+                if (openList.Contains(child) && G > child.G) continue;
                 else
                 {
                     child.G = G;
                     child.H = H;
+                    child.PathParent = openNode;
                     if (!openList.Contains(child)) openList.Add(child);
                 }
             }
             
         }
+        Debug.Log("No path found");
         return null; //if you get here then the algo searched every space and never found a path;
     }
     public List<BattleSpace> CalculatePath(Unit mover, IOccupyBattleSpace target)
@@ -325,7 +356,7 @@ public class BattleSpace : IComparable<BattleSpace>
     [JsonIgnore] public float y; //x and y used to get center point of the battle space in worldspace for moving characters around
 
     public int row;
-    public int col; // 1,1  1,2  1,3 
+    public int col; // 1,1  1,2  1,3  1,4  1,5
                     // 2,1  2,2  2,3
                     // 3,1  3,2  3,3
 
@@ -351,7 +382,26 @@ public class BattleSpace : IComparable<BattleSpace>
     }
 
 }
+public class TargetData
+{
+    [JsonIgnore] public IOccupyBattleSpace target;
+    public string targetName;
+    public Team targetTeam;
+    public BattleSpace BattleSpace;
+    public int rangeTo;
+    public int pathDist;
 
+
+    public TargetData(IOccupyBattleSpace target, BattleSpace targetSpace, int rangeTo, int pathDist)
+    {
+        this.target = target;
+        this.targetName = target.Name;
+        this.targetTeam = target.Team;
+        BattleSpace = targetSpace;
+        this.rangeTo = rangeTo;
+        this.pathDist = pathDist;
+    }
+}
 
 public interface IOccupyBattleSpace
 {

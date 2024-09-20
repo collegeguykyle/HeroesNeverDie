@@ -64,6 +64,22 @@ public class ReportStartTurn : ToReport
         unitName = unit.Name;
     }
 }
+
+public class ReportTargettingData : ToReport
+{
+    [JsonIgnore] public Unit caster;
+    public string casterName;
+    public BattleSpace casterSpace;
+    public List<TargetData> targetDataAll;
+    public ReportTargettingData(Unit caster, BattleSpace casterSpace, List<TargetData> targets)
+    {
+        this.caster = caster;
+        this.casterName = caster.Name;
+        this.casterSpace = casterSpace;
+        this.targetDataAll = targets;
+    }
+}
+
 public class ReportEndTurn : ToReport
 {
     [JsonIgnore] public Unit unit;

@@ -33,7 +33,7 @@ public class Melee1 : Ability, IHit, IDealDamage
 
         //This ability only does one attack
         ActionST resultAttack = new ActionST(this, TargettingData.SelectedTarget);
-        ResultHit resultHit = ResultHit.TryHit(this, TargettingData.GetUnitTarget());
+        ResultHit resultHit = ResultHit.TryHit(this, TargettingData.SelectedTarget as Unit);
         resultAttack.actionResults.Add(resultHit);
         if (resultHit.success)
         {
@@ -83,7 +83,7 @@ public class Melee2 : Ability, IHit, IDealDamage
 
         //This ability only does one attack
         ActionST resultAttack = new ActionST(this, TargettingData.SelectedTarget);
-        ResultHit resultHit = ResultHit.TryHit(this, TargettingData.GetUnitTarget());
+        ResultHit resultHit = ResultHit.TryHit(this, TargettingData.SelectedTarget as Unit);
         resultAttack.actionResults.Add(resultHit);
         if (resultHit.success)
         {
@@ -116,7 +116,7 @@ public class MoveBasic : Ability, IMoveSelf
 
     public override void ExecuteAbility(ResultTargetting TargettingData)
     {
-        ResultMovement result = ResultMovement.MoveUnitTowards(OwningUnit, TargettingData.SelectedTargetData.BattleSpace, MoveType.Walk);
+        ResultMovement result = ResultMovement.MoveUnitTowards(OwningUnit, TargettingData.getTargetData().BattleSpace, MoveType.Walk);
         OwningUnit.Battle.AddToActionStack(result, this, TargettingData.SelectedTarget);
     }
 }

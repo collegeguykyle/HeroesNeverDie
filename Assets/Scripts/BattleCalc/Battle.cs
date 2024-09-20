@@ -20,7 +20,7 @@ public class Battle
     public Unit CurrentUnit { get; private set; }
     private bool BattleOver = false;
     int battleSafeGuard = 0;
-    private List<Engagement> Engagements = new List<Engagement>();
+    public Engagements engagements { get; private set; } = new Engagements();
     private Stack<Action> ActionsStack = new Stack<Action>();
     private ResultAbility currentAbility;
 
@@ -37,8 +37,6 @@ public class Battle
         TurnOrder = new TurnOrder(PlayerTeam, EnemyTeam);
 
         SpaceController = new BattleSpacesController(playerTeam, enemyTeam);
-        SpaceController.PlaceEnemyTeam(EnemyTeam);
-        SpaceController.PlacePlayerTeam(PlayerTeam);
         
         foreach (Unit unit in playerTeam) {unit.BattleStart(this); }
         foreach (Unit unit in enemyTeam) { unit.BattleStart(this); } 
@@ -91,26 +89,30 @@ public class Battle
         //and abilities have sufficient uses available. If we itterate through full list without finding
         //an abiltiy to use, then the unit cannot do anything and passes the turn.
         bool passTurn = false;
-        int turnSafeGuard = 0; //pass the turn after X iterations through the tactic to avoid accidental infinite loops 
+        int turnSafeGuard = 1; //pass the turn after X iterations through the tactic to avoid accidental infinite loops 
         do 
         {
-            BattleReport.AddReport(new ReportMessage("Starting Tactics Eval Loop"));
+            BattleReport.AddReport(new ReportMessage("Starting Tactics Eval Loop: " + turnSafeGuard));
             passTurn = true;
+            List<TargetData> targetsData = SpaceController.GetTargets(CurrentUnit);
+            BattleSpace space = SpaceController.GetSpaceOf(CurrentUnit);
+            BattleReport.AddReport(new ReportTargettingData(CurrentUnit, space, targetsData));
+
             foreach (Tactic tactic in Tactics)
             {
                 BattleReport.AddReport(new ReportMessage("Testing Tactic:  " + tactic.Ability.Name ));
-                //3-5: Are basic requirements to use the tactic met? Unit alive, enough mana, etc
-                tactic.resultTargetting = null;
-                tactic.TacticSelected = false;
+                tactic.TacticReset();
 
-                bool basicConditions = tactic.BasicConditionsMet(this, CurrentUnit.Mana);
+                //3-5: Are basic requirements to use the tactic met? Unit alive, enough mana, etc
+                bool basicConditions = tactic.BasicConditionsMet(this, CurrentUnit.Mana, engagements);
                 if (!basicConditions) 
                 { 
                     BattleReport.AddReport(tactic);
                     continue;
                 }
+
                 //6-10: Do tactic conditions allow for use?
-                ResultTargetting resultT = tactic.TestTactic(this, SpaceController, CurrentUnit.Mana);
+                ResultTargetting resultT = tactic.TestTactic(this, targetsData, CurrentUnit.Mana, engagements);
                 if (tactic.TacticSelected)
                 {
                     passTurn = false;
@@ -283,52 +285,9 @@ public class Battle
 
 #endregion
 
-#region Engagements
-
-    public void AddEngagement(Unit Attacker, Unit Victim)
-    {
-        Engagements.Add(new Engagement(Attacker, Victim));
-    }
-
-    public void RemoveEngagement(Unit Attacker, Unit Victim)
-    {
-        foreach (Engagement E in Engagements)
-        {
-            if (E.Compare(Attacker, Victim)) Engagements.Remove(E);
-        }
-    }
-
-    public bool TestEngaged (Unit unit)
-    {
-        bool isEngaged = false;
-        foreach(Engagement E in Engagements)
-        {
-            if (E.Victim == unit) isEngaged = true;
-        }
-        return isEngaged;
-    }
-
-    #endregion
-
 }
 
-public class Engagement
-{
-    public Engagement(Unit attacker, Unit victim)
-    {
-        Attacker = attacker;
-        Victim = victim;
-    }
-    
-    public Unit Attacker;
-    public Unit Victim;
 
-    public bool Compare (Unit attacker, Unit victim)
-    {
-        if (attacker == Attacker && victim == Victim) return true;
-        else return false;
-    }
-}
 
 
 
