@@ -38,6 +38,9 @@ public class BattleReport
         EnemyTeam = enemyTeam;
     }
 
+    public List<Unit> GetPlayerTeam() => PlayerTeam;
+    public List<Unit> GetEnemyTeam() => EnemyTeam;
+
 }
 
 public abstract class ToReport : EventArgs
