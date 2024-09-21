@@ -12,6 +12,8 @@ public class ResultTargetting : ToReport
     [JsonIgnore] public IOccupyBattleSpace Caster;
     public string CasterName;
     public BattleSpace CasterBattleSpace;
+    public int CurrentMove;
+    public string ManaReport;
     
     [JsonIgnore] public Ability Ability;
     public string AbilityName;
@@ -20,7 +22,7 @@ public class ResultTargetting : ToReport
 
     [JsonIgnore] public IOccupyBattleSpace SelectedTarget;
     public string selectedTarget;
-    [JsonIgnore] public TargetEval SelectedTargetEval;
+    [JsonIgnore] public TargetEval SelectedTargetEval = null;
 
     public List<TargetEval> EvalsList = new List<TargetEval>();
     [JsonIgnore] Dictionary<TargetEval, TargetData> dataPairs = new Dictionary<TargetEval, TargetData>();
@@ -36,6 +38,8 @@ public class ResultTargetting : ToReport
         AbilityName = ability.Name;
         Caster = Ability.OwningUnit;
         CasterName = Caster.Name;
+        if (Caster is Unit) CurrentMove = (Caster as Unit).CurrentMove;
+        if (Caster is Unit) ManaReport = (Caster as Unit).Mana.ManaAsString();
         this.dataPairs = dataPairs;
         foreach (TargetEval key in dataPairs.Keys) EvalsList.Add(key);
     }
@@ -45,11 +49,14 @@ public class ResultTargetting : ToReport
         AbilityName= ability.Name;
         Caster = ability.OwningUnit;
         CasterName = Caster.Name;
+        if (Caster is Unit) CurrentMove = (Caster as Unit).CurrentMove;
+        if (Caster is Unit) ManaReport = (Caster as Unit).Mana.ManaAsString();
         this.conditions = conditions;
     }
 
     public TargetData getTargetData()
     {
+        if (dataPairs.Keys.Count == 0 || selectedTarget == null) return null;
         return dataPairs[SelectedTargetEval];
     }
 

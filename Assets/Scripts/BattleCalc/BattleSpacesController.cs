@@ -267,7 +267,7 @@ public class BattleSpacesController
                     closedList.Add(child);
                     continue;
                 }
-                int G = openNode.G + 10;
+                int G = openNode.G + 11;
                     if (child.row != openNode.row && child.col != openNode.col) G += 5; //diaganols cost 15
                 int H = CalculateDistance(child.row, child.col, GoalNode.row, GoalNode.col); //distance between child and goal
 
@@ -363,9 +363,9 @@ public class BattleSpace : IComparable<BattleSpace>
                     // 3,1  3,2  3,3
 
     [JsonIgnore] public BattleSpace PathParent;
-    [JsonIgnore] public int F { get { return G + H; } } //F is the total cost of the node. F = G + H
-    [JsonIgnore] public int G = 999; //G is the distance between the current node and the start node.
-    [JsonIgnore] public int H = 999; //H is the heuristic — estimated distance from the current node to the end node.
+     public int F { get { return G + H; } } //F is the total cost of the node. F = G + H
+     public int G = 999; //G is the distance between the current node and the start node.
+     public int H = 999; //H is the heuristic — estimated distance from the current node to the end node.
 
     [JsonIgnore] public IOccupyBattleSpace isInSpace;
 
@@ -389,6 +389,7 @@ public class TargetData
     [JsonIgnore] public IOccupyBattleSpace target;
     public string targetName;
     public Team targetTeam;
+    public int targetHP;
     public BattleSpace BattleSpace;
     public int rangeTo;
     public int pathDist;
@@ -399,6 +400,7 @@ public class TargetData
         this.target = target;
         this.targetName = target.Name;
         this.targetTeam = target.Team;
+        if (target is Unit) this.targetHP = (target as Unit).CurrentHP;
         BattleSpace = targetSpace;
         this.rangeTo = rangeTo;
         this.pathDist = pathDist;

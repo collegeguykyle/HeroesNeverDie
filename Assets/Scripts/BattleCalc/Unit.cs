@@ -90,7 +90,7 @@ public class Unit : EventArgs, IOccupyBattleSpace
     public void TakeDamage(int damage)
     {
         CurrentHP -= damage;
-        if (CurrentHP <= 0) Battle.Reactions.SendUnitDeath(this);
+        if (CurrentHP <= 0) Battle.UnitKilled(this);
     }
 
     public void ClearMana()

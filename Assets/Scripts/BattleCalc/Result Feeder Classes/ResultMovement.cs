@@ -83,8 +83,10 @@ public enum MoveType {  Walk, Fly, Teleport, Push, Pull }
 
 public interface IMoveSelf
 {
-    public bool validPath { get; protected set; }
-    //probably should require a MoveType enum....
+    public bool validPath { get; }
+    public MoveType moveType { get;  }
+    
+
     //Immune to difficult terrain types or other terrain effects?
 }
 

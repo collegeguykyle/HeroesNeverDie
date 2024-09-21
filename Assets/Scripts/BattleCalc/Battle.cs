@@ -41,7 +41,6 @@ public class Battle
         foreach (Unit unit in playerTeam) {unit.BattleStart(this); }
         foreach (Unit unit in enemyTeam) { unit.BattleStart(this); } 
 
-        Reactions.UnitDeath += TestBattleOver;
         BattleLoop();
     }
     
@@ -78,10 +77,9 @@ public class Battle
         ResultRollMana result = CurrentUnit.RollManaDice(); //1: Unit rolls mana
         Reactions.SendManaDieRolled(result);
         BattleReport.AddReport(result);
+
         CurrentUnit.Mana.AddMana(result.TotalMana());
         CurrentUnit.Mana.ReportMana(BattleReport);
-        CurrentUnit.Mana.AddMana(result.TotalMana());
-        
 
         List<Tactic> Tactics = CurrentUnit.Tactics;
         //2: itterate through unit's tactics in order of priority until we find one that can be used, and use it
@@ -115,7 +113,7 @@ public class Battle
                 ResultTargetting resultT = tactic.TestTactic(this, targetsData, CurrentUnit.Mana, engagements);
                 resultT.conditions = conditions;
                 //*****10: Execute the ability against the chosen target*****
-                if (resultT.TacticSelected) // <----- I AM HERE: Need completely different Tactic eval system for move abilities??
+                if (resultT.TacticSelected && resultT.getTargetData() != null) 
                 {
                     passTurn = false;
                     Reactions.SendTargeting(resultT);
@@ -167,7 +165,25 @@ public class Battle
         currentAbility = null;
     }
 
-    public void TestBattleOver(object sender, Unit unit)
+    public void EndBattle(Team victors)
+    {
+        Reactions.SendEndBattle();
+        BattleOver = true;
+        Reactions.Dispose();
+        BattleReport.AddReport(currentAbility);
+        BattleReport.TotalTurns = battleSafeGuard;
+        BattleReport.Victors = victors;
+        BattleReport.AddReport(new ReportEndBattle(victors));
+    }
+
+    public void UnitKilled(Unit unit)
+    {
+        TurnOrder.RemoveFromTurnOrder(unit);
+        Reactions.SendUnitDeath(unit);
+        TestBattleOver();
+    }
+
+    public void TestBattleOver()
     {
         bool allPlayerDead = true;
         bool allEnemyDead = true;
@@ -181,26 +197,15 @@ public class Battle
         {
             if (u.CurrentHP > 0) allEnemyDead = false;
         }
-        
+
         if (allPlayerDead && allEnemyDead) EndBattle(Team.neutral); //This is a tie
         else if (allPlayerDead) EndBattle(Team.enemy);
         else if (allEnemyDead) EndBattle(Team.player);
     }
 
-    public void EndBattle(Team victors)
-    {
-        Reactions.SendEndBattle();
-        BattleOver = true;
-        Reactions.Dispose();
-        BattleReport.AddReport(currentAbility);
-        BattleReport.TotalTurns = battleSafeGuard;
-        BattleReport.Victors = victors;
-        BattleReport.AddReport(new ReportEndBattle(victors));
-    }
+    #endregion
 
-#endregion
-
-#region Stack Resolution
+    #region Stack Resolution
 
     public void AddToActionStack(Action action)
     {

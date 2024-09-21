@@ -20,6 +20,17 @@ public class Mana
         }
         report.AddReport(new ReportMessage(manaReport));
     }
+
+    public string ManaAsString()
+    {
+        string manaReport = "ManaReport:  ";
+
+        foreach (ManaType type in count.Keys)
+        {
+            manaReport += type + ": " + count[type] + " | ";
+        }
+        return manaReport;
+    }
     
     public void AddManaType(ManaType type, int num)
     {

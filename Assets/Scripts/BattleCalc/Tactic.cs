@@ -39,28 +39,27 @@ public class Tactic
                 TargetEval newEval = new TargetEval(data.target);
                 targetEvals.Add(newEval);
                 dataPairs.Add(newEval, data);
+                if (data.target is Unit && (data.target as Unit).CurrentHP <= 0) newEval.alive = false;
             }
         }
         ResultTargetting result = new ResultTargetting(Ability, dataPairs);
-        if (targetEvals.Count == 0)
-        {
-            result.AnyOptions = false;
-            return result;
-        }
-        else result.AnyOptions = true;
         
-
         //6: Can unit target an enemy with it from where it is?
         bool AnyInRange = false;
         foreach (TargetEval eval in targetEvals) 
         {
             TargetData data = dataPairs[eval];
-            if (data.rangeTo <= Ability.Range || Ability is IMoveSelf) 
-            { 
-                eval.inRange = true; 
+            eval.inRange = false;
+            if (eval.alive == false)
+            {
+                continue;
+            }
+            if (Ability is IMoveSelf || data.rangeTo <= Ability.Range)
+            {
+                eval.inRange = true;
                 AnyInRange = true;
             }
-            else eval.inRange = false;
+            
         }
         if (!AnyInRange)
         {
@@ -107,21 +106,33 @@ public class Tactic
 
         //9.2: Evaluate targets to see if one has highest priority
         int highP = 0;
-        TargetEval choice = targetEvals[0];
+        TargetEval choice = null;
+        List<TargetEval> options = new List<TargetEval>();
         foreach (TargetEval eval in targetEvals)
         {
-            if (eval.PriorityScore > highP && eval.inRange && eval.TacticRequirement)
+            if (eval.inRange && eval.alive && eval.TacticRequirement)
             {
-                choice = eval;
-                highP = eval.PriorityScore;
+                options.Add(eval);
+                if (eval.PriorityScore > highP)
+                {
+                    choice = eval;
+                    highP = eval.PriorityScore;
+                }
             }
-            choice.targetSelected = true;
         }
 
+        if (choice != null)
+        {
+            choice.targetSelected = true;
+            result.SelectTarget(choice);
+        }
         //9.2: If still a tie between two targets, choose closest, then randomly --OR-- ability has prefered Selector if player does not input one
         //TestTargetSelector(TCondition.Closest, evals, dataPairs);
-        result.SelectTarget(choice);
-
+        else
+        {
+            options[0].targetSelected = true;
+            result.SelectTarget(options[0]);
+        }
         //*****10: Execute the ability against the chosen target*****
         return result;
 
@@ -141,7 +152,7 @@ public class Tactic
         bool engaged = engages.TestEngaged(Owner);
         if (engaged && !Ability.UseEngaged) ConditionsCheck.EngagedLimited = false;        //if unit is engaged can this ability be used?
 
-        if (Ability is IMoveSelf && Owner.CurrentMove < 1) ConditionsCheck.MovePoints = false; //if move ability and no movement points
+        if (Ability is IMoveSelf && Owner.CurrentMove < 10) ConditionsCheck.MovePoints = false; //if move ability and no movement points
 
         return ConditionsCheck;
     }
@@ -341,10 +352,11 @@ public class TargetEval
 {
     [JsonIgnore] public IOccupyBattleSpace target;
     public string targetName;
-    public bool inRange = false;
-    public bool TacticRequirement = false;
-    public bool TacticPreference = false;
-    public bool TacticPriority = false;
+    public bool alive = true;
+    public bool inRange;
+    public bool TacticRequirement;
+    public bool TacticPreference;
+    public bool TacticPriority;
     public int PriorityScore = 0;
     public bool targetSelected = false;
 

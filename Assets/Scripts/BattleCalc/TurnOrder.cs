@@ -39,6 +39,10 @@ public class TurnOrder
         }
     }
 
+    public void RemoveFromTurnOrder(Unit unit)
+    {
+        turnOrder.Remove(unit);
+    }
 
     private List<Unit> DetermineTurnOrder(List<Unit> playerTeam, List<Unit> enemyTeam)
     {

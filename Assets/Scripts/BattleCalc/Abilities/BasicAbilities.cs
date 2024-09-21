@@ -31,7 +31,7 @@ public class Melee1 : Ability, IHit, IDealDamage
 
     public override void ExecuteAbility(ResultTargetting TargettingData)
     {
-
+        Debug.Log("Using Basic Test Melee");
         //This ability only does one attack
         ActionST resultAttack = new ActionST(this, TargettingData.SelectedTarget);
         ResultHit resultHit = ResultHit.TryHit(this, TargettingData.SelectedTarget as Unit);
@@ -41,7 +41,7 @@ public class Melee1 : Ability, IHit, IDealDamage
             ResultDamage damageResult = new ResultDamage(resultHit, this);
             resultAttack.actionResults.Add(damageResult);
         }
-
+        OwningUnit.Battle.AddToActionStack(resultAttack);
     }
 
     public int GetAttackBonus()
@@ -81,7 +81,7 @@ public class Melee2 : Ability, IHit, IDealDamage
 
     public override void ExecuteAbility(ResultTargetting TargettingData)
     {
-
+        Debug.Log("Using Big Melee");
         //This ability only does one attack
         ActionST resultAttack = new ActionST(this, TargettingData.SelectedTarget);
         ResultHit resultHit = ResultHit.TryHit(this, TargettingData.SelectedTarget as Unit);
@@ -91,7 +91,7 @@ public class Melee2 : Ability, IHit, IDealDamage
             ResultDamage damageResult = new ResultDamage(resultHit, this);
             resultAttack.actionResults.Add(damageResult);
         }
-
+        OwningUnit.Battle.AddToActionStack(resultAttack);
     }
 
     public int GetAttackBonus()
@@ -113,11 +113,14 @@ public class MoveBasic : Ability, IMoveSelf
     public override int Range { get; protected set; } = 0;
     public override bool UseEngaged { get; protected set; } = false;
     public override Team targets { get; protected set; } = Team.enemy;
-    bool IMoveSelf.validPath { get; set; } 
+
+    public MoveType moveType { get; protected set; } = MoveType.Walk;
+
+    public bool validPath { get;  } 
 
     public override void ExecuteAbility(ResultTargetting TargettingData)
     {
-        Debug.Log(OwningUnit + " trying to move");
+        Debug.Log("Using Basic Move");
         ResultMovement result = ResultMovement.MoveUnitTowards(OwningUnit, TargettingData.getTargetData().BattleSpace, MoveType.Walk);
         OwningUnit.Battle.AddToActionStack(result, this, TargettingData.SelectedTarget);
     }
