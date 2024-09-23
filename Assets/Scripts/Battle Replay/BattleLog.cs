@@ -5,12 +5,13 @@ using TMPro;
 public class BattleLogWithDynamicTooltips : MonoBehaviour
 {
     public TextMeshProUGUI battleLogText;  // Reference to your battle log TextMeshProUGUI
-    public GameObject tooltipBox;          // Reference to the tooltip UI panel
-    public TextMeshProUGUI tooltipText;    // Reference to the TextMeshProUGUI in the tooltip box
+    public TooltipController tooltipController;
     public RectTransform canvasRect;       // Reference to the canvas RectTransform
+    public RectTransform scrollRectTransform; // Reference to the ScrollRect's RectTransform for visible area checking
+    public RectTransform contentTransform;    // Reference to the content RectTransform that holds the battle log text
 
     // Dictionary to store tooltip data, keyed by unique IDs (for flexibility with different types)
-    private Dictionary<string, object> dynamicTooltips = new Dictionary<string, object>();
+    private Dictionary<string, IBattleLogTooltip> dynamicTooltips = new Dictionary<string, IBattleLogTooltip>();
 
     // The battle log text history
     private string logHistory = "";
@@ -19,10 +20,23 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
 
     private void Start()
     {
-        tooltipBox.SetActive(false); // Initially hide the tooltip box
+        tooltipController.HideTooltip();
         AddToBattleLog( new HitResult(100, "Stun", false) );
         AddToBattleLog( new HitResult(20, "none", true) );
         AddToBattleLog(new HitResult(73, "Blah blah blah hit", false));
+
+        AddTextToBattleLog("Changes to Integrate TooltipManager:\r\n\r\n    " +
+            "Reference to TooltipManager:\r\n        Added a reference to TooltipManager in the " +
+            "BattleLogWithDynamicTooltips class to handle displaying tooltips and adjusting their size " +
+            "dynamically.\r\n\r\n    ShowTooltip() Method:\r\n        Instead of directly manipulating " +
+            "the tooltip in the battle log class, we now call tooltipManager.ShowTooltip(tooltipContent) " +
+            "to display the tooltip. The TooltipManager automatically adjusts the size of the tooltip box " +
+            "based on the content.\r\n\r\n    HideTooltip():\r\n        The HideTooltip() method of " +
+            "TooltipManager is called to hide the tooltip when the mouse is not hovering over any link.\r\n\r\n    " +
+            "Tooltip Positioning:\r\n        The tooltip box position is still updated to follow the mouse " +
+            "using localPosition, but the actual display of the tooltip is now handled by TooltipManager." +
+            "\r\n\r\nExample TooltipManager Class:\r\n\r\nHere’s the TooltipManager class, as we discussed " +
+            "earlier, for handling the tooltip display and dynamic sizing:");
     }
 
     private void Update()
@@ -34,16 +48,26 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
             TMP_LinkInfo linkInfo = battleLogText.textInfo.linkInfo[linkIndex];
             string hoveredKeyword = linkInfo.GetLinkID();
 
-            // If a new keyword is hovered, show its tooltip
-            if (hoveredKeyword != currentHoveredKeyword)
+            // Check if the hovered text is visible within the ScrollRect's viewport
+            if (IsTextVisible(linkInfo))
             {
-                currentHoveredKeyword = hoveredKeyword;
-                ShowTooltip(hoveredKeyword);
+                // If a new keyword is hovered, show its tooltip
+                if (hoveredKeyword != currentHoveredKeyword)
+                {
+                    currentHoveredKeyword = hoveredKeyword;
+                    ShowTooltip(hoveredKeyword);
+                }
+            }
+            else
+            {
+                tooltipController.HideTooltip();  // Hide the tooltip if text is not visible
+                currentHoveredKeyword = null;
             }
         }
         else
         {
-            HideTooltip(); // Hide tooltip when not hovering over any keyword
+            tooltipController.HideTooltip();  // Hide tooltip when not hovering over any keyword
+            currentHoveredKeyword = null;
         }
     }
 
@@ -70,6 +94,16 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
         UpdateDisplayedLog();
     }
 
+    // Helper method to add plain text to the battle log
+    public void AddTextToBattleLog(string message)
+    {
+        // Append the plain text to the log history
+        logHistory += message + "\n";
+
+        // Update the displayed battle log
+        UpdateDisplayedLog();
+    }
+
     // Method to update the displayed battle log
     private void UpdateDisplayedLog()
     {
@@ -80,29 +114,49 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
     {
         if (dynamicTooltips.ContainsKey(keyword))
         {
-            // Check if the tooltip data is a HitResult or other type and display accordingly
-            if (dynamicTooltips[keyword] is HitResult hitResult)
-            {
-                tooltipText.text = hitResult.GetTooltipText();
-            }
-            else if (dynamicTooltips[keyword] is string otherData)
-            {
-                tooltipText.text = otherData; // For example, if it's a string or other data type
-            }
+            // Get the tooltip content from the tooltipData
+            string tooltipContent = dynamicTooltips[keyword].GetTooltipText();
 
-            tooltipBox.SetActive(true);
+            // Display the tooltip using the TooltipManager
+            tooltipController.ShowTooltip(tooltipContent);
         }
 
         // Move the tooltip box to follow the mouse
         Vector2 localPoint;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, Input.mousePosition, null, out localPoint);
-        tooltipBox.GetComponent<RectTransform>().localPosition = localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(contentTransform, Input.mousePosition, null, out localPoint);
+        localPoint.x = tooltipController.tooltipBox.localPosition.x;
+        localPoint.y += 30;
+        tooltipController.tooltipBox.localPosition = localPoint;
     }
 
-    private void HideTooltip()
+    // Check if the hovered text is visible inside the ScrollRect
+    private bool IsTextVisible(TMP_LinkInfo linkInfo)
     {
-        tooltipBox.SetActive(false);
-        currentHoveredKeyword = null;
+        // Get the first and last character info for the link
+        int firstCharacterIndex = linkInfo.linkTextfirstCharacterIndex;
+        int lastCharacterIndex = linkInfo.linkTextfirstCharacterIndex + linkInfo.linkTextLength - 1;
+
+        // Get the bottom left position of the first character and the top right of the last character
+        TMP_CharacterInfo firstCharInfo = battleLogText.textInfo.characterInfo[firstCharacterIndex];
+        TMP_CharacterInfo lastCharInfo = battleLogText.textInfo.characterInfo[lastCharacterIndex];
+
+        // Transform the character positions to local space
+        Vector3 bottomLeft = battleLogText.transform.TransformPoint(firstCharInfo.bottomLeft);
+        Vector3 topRight = battleLogText.transform.TransformPoint(lastCharInfo.topRight);
+
+        // Get the local midpoint of the link
+        Vector3 linkMidPoint = (bottomLeft + topRight) / 2;
+
+        // Convert the midpoint to local space of the viewport
+        Vector2 localPosition;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(scrollRectTransform, RectTransformUtility.WorldToScreenPoint(null, linkMidPoint), null, out localPosition);
+
+        // Get the local bounds of the viewport (use yMin and yMax for vertical scrolling)
+        float viewportTop = scrollRectTransform.rect.yMax;
+        float viewportBottom = scrollRectTransform.rect.yMin;
+
+        // Check if the link's midpoint is between the top and bottom of the ScrollRect's viewport
+        return (localPosition.y <= viewportTop && localPosition.y >= viewportBottom);
     }
 }
 
