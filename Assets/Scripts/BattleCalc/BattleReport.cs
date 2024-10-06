@@ -21,6 +21,8 @@ public class BattleReport
 
     //really thats it, just need to log in order whenever something happens so the replay can then show the animations
     //for those things happening and update the UI and on screen battle log.
+
+
     public int TotalTurns;
     public Team Victors;
     private List<Unit> PlayerTeam;

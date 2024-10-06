@@ -7,7 +7,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
-//NEXT STEP: Build an example team and feed it into the machine to see what happens.
 
 public class JSONTest : MonoBehaviour
 {
@@ -83,7 +82,7 @@ public class JSONTest : MonoBehaviour
     public static void JsonSave(BattleReport battleReport)
     {
 
-        string filePath = "D:\\Unity Testing\\saveFile.BtlR";
+        string filePath = "C:\\Users\\Colle\\Desktop\\saveFile.BtlR";
         var serializedObj = JsonConvert.SerializeObject(battleReport, Formatting.Indented, JSONSettings());
         using (StreamWriter sw = new StreamWriter(filePath))
         {
@@ -91,5 +90,19 @@ public class JSONTest : MonoBehaviour
         }
         print("BattleReport generated at " + filePath);
     }
+
+    public static BattleReport LoadJsonReplay(string fileName)
+    {
+        string filePath = "D:\\Unity Testing\\" + fileName;
+        string content;
+        using (StreamReader sr = new StreamReader(filePath))
+        {
+            content = sr.ReadToEnd();
+        }
+
+        BattleReport report = JsonConvert.DeserializeObject<BattleReport>(content, JSONSettings());
+        return report;
+    }
+
 }
 

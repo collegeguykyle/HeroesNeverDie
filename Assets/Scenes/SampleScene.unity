@@ -499,7 +499,7 @@ GameObject:
   - component: {fileID: 198351223}
   - component: {fileID: 198351225}
   m_Layer: 5
-  m_Name: FIll(1)
+  m_Name: Transparent Bound Box
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4069,8 +4069,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 102.3, y: -0.149}
-  m_SizeDelta: {x: 8.6332, y: 184.9575}
+  m_AnchoredPosition: {x: 102.3, y: -0.57038}
+  m_SizeDelta: {x: 8.6332, y: 208.23}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1394179980
 MonoBehaviour:
@@ -4315,6 +4315,7 @@ MonoBehaviour:
   tooltipController: {fileID: 1199413027}
   canvasRect: {fileID: 1455942391}
   scrollRectTransform: {fileID: 1608447038}
+  contentTransform: {fileID: 1647015858}
 --- !u!1 &1457151392
 GameObject:
   m_ObjectHideFlags: 0
@@ -4876,8 +4877,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -110.52396, y: 97.780365}
-  m_SizeDelta: {x: 221.0281, y: 195.5606}
+  m_AnchoredPosition: {x: -110.52396, y: 111.54338}
+  m_SizeDelta: {x: 221.0281, y: 223.0968}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1608447039
 MonoBehaviour:

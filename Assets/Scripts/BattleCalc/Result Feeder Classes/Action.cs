@@ -47,9 +47,9 @@ public class ActionAOE : Action
         return result;
     }
 
-    public ActionAOE(Ability ability)
+    public ActionAOE(IAOE ability)
     {
-        owningAbility = ability;
+        owningAbility = ability as Ability;
     }
 }
 

@@ -9,9 +9,9 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
     public RectTransform canvasRect;       // Reference to the canvas RectTransform
     public RectTransform scrollRectTransform; // Reference to the ScrollRect's RectTransform for visible area checking
     public RectTransform contentTransform;    // Reference to the content RectTransform that holds the battle log text
-
+    public bool MoveToMouse = false;
     // Dictionary to store tooltip data, keyed by unique IDs (for flexibility with different types)
-    private Dictionary<string, IBattleLogTooltip> dynamicTooltips = new Dictionary<string, IBattleLogTooltip>();
+    private Dictionary<string, string> dynamicTooltips = new Dictionary<string, string>();
 
     // The battle log text history
     private string logHistory = "";
@@ -21,9 +21,14 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
     private void Start()
     {
         tooltipController.HideTooltip();
-        AddToBattleLog( new HitResult(100, "Stun", false) );
-        AddToBattleLog( new HitResult(20, "none", true) );
-        AddToBattleLog(new HitResult(73, "Blah blah blah hit", false));
+        AddTestText();
+    }
+
+    private void AddTestText()
+    {
+        LogWithTooltip(new KW_Hit(100, "Stun", false), "Someone hit with a stun ability.");
+        LogWithTooltip(new KW_Hit(20, "none", true), "Hit,");
+        LogWithTooltip(new KW_Hit(73, "Blah blah blah hit", false), "another hit.");
 
         AddTextToBattleLog("Changes to Integrate TooltipManager:\r\n\r\n    " +
             "Reference to TooltipManager:\r\n        Added a reference to TooltipManager in the " +
@@ -40,6 +45,11 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
     }
 
     private void Update()
+    {
+        DetectKeyWords();
+    }
+
+    public void DetectKeyWords()
     {
         // Detect if the mouse is hovering over a specific link (keyword) in the text
         int linkIndex = TMP_TextUtilities.FindIntersectingLink(battleLogText, Input.mousePosition, null);
@@ -71,62 +81,44 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
         }
     }
 
-    // Helper method to add dynamic tooltip data and a generic message to the log
-    public void AddToBattleLog(IBattleLogTooltip tooltipData)
-    {
-        // Automatically assign a unique ID based on the current number of dynamic tooltips
-        string uniqueID = $"log_{dynamicTooltips.Count}";
-
-        // Add the tooltip data to the dictionary with its unique ID
-        dynamicTooltips[uniqueID] = tooltipData;
-
-        // Get the battle log entry text from the class, with the {keyword} placeholder
-        string logEntry = tooltipData.GetLogEntryText();
-
-        // Replace the {keyword} placeholder with the actual link and color
-        logEntry = logEntry.Replace(tooltipData.Keyword, 
-            $"<link={uniqueID}><color={tooltipData.TextColor}>{tooltipData.Keyword}</color></link>");
-
-        // Append the log entry to the log history
-        logHistory += logEntry + "\n";
-
-        // Update the displayed battle log
-        UpdateDisplayedLog();
-    }
-
     // Helper method to add plain text to the battle log
     public void AddTextToBattleLog(string message)
     {
-        // Append the plain text to the log history
-        logHistory += message + "\n";
-
-        // Update the displayed battle log
-        UpdateDisplayedLog();
+        battleLogText.text += message + "\n";
     }
 
-    // Method to update the displayed battle log
-    private void UpdateDisplayedLog()
+    public void LogWithTooltip(IToolTipKeyWord tooltipData, string message)
     {
-        battleLogText.text = logHistory; // Display the full battle log
+        // Generate a unique ID for this tooltip
+        string uniqueID = $"tooltip_{dynamicTooltips.Count}";
+        dynamicTooltips[uniqueID] = tooltipData.GetTooltipText();
+
+        // Append the message to the battle log, replacing dynamic text with a <link>
+        string logEntry = $"<link={uniqueID}><color=yellow>{message}</color></link>";
+
+        battleLogText.text += logEntry + "\n";
     }
 
-    private void ShowTooltip(string keyword)
+    private void ShowTooltip(string linkID)
     {
-        if (dynamicTooltips.ContainsKey(keyword))
+        if (dynamicTooltips.ContainsKey(linkID))
         {
             // Get the tooltip content from the tooltipData
-            string tooltipContent = dynamicTooltips[keyword].GetTooltipText();
+            string tooltipContent = dynamicTooltips[linkID];
 
             // Display the tooltip using the TooltipManager
             tooltipController.ShowTooltip(tooltipContent);
         }
 
-        // Move the tooltip box to follow the mouse
-        Vector2 localPoint;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(contentTransform, Input.mousePosition, null, out localPoint);
-        localPoint.x = tooltipController.tooltipBox.localPosition.x;
-        localPoint.y += 30;
-        tooltipController.tooltipBox.localPosition = localPoint;
+        if (MoveToMouse)// Move the tooltip box to follow the mouse
+        {
+            Vector2 localPoint;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(contentTransform, Input.mousePosition, null, out localPoint);
+            localPoint.x = tooltipController.tooltipBox.localPosition.x;
+            localPoint.y += 30;
+            tooltipController.tooltipBox.localPosition = localPoint;
+        }
+        
     }
 
     // Check if the hovered text is visible inside the ScrollRect
@@ -160,42 +152,6 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
     }
 }
 
-public interface IBattleLogTooltip
-{
-    string GetTooltipText();  // Returns the text for the tooltip
-    string Keyword { get; }   // Returns the keyword associated with the log entry
-    string TextColor { get; } // Returns the color for the keyword in the log (as a hex code or name)
-    string GetLogEntryText(); // Returns the text that should appear in the battle log
-}
-
-// Example class for HitResult, can be extended with other tooltip types
-public class HitResult : IBattleLogTooltip
-{
-    public string Keyword => "hit";
-    public string TextColor => "#FF0000";  // Red color
-
-    public int damage;
-    public string statusEffect;
-    public bool isCritical;
-
-    public HitResult(int damage, string statusEffect, bool isCritical)
-    {
-        this.damage = damage;
-        this.statusEffect = statusEffect;
-    }
-
-    // Text that will appear in the tool tip
-    public string GetTooltipText()
-    {
-        return $"Damage: {damage}\n" +
-            $"Status: {statusEffect}\n" +
-            $"Critical Hit: {isCritical}";
-    }
-    // The text that will appear in the battle log
-    public string GetLogEntryText()
-    {
-        return $"Unit_Name was {Keyword} for {damage} damage!";
-    }
 
 
-}
+
