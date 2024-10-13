@@ -27,9 +27,9 @@ public class ResultRollMana : ToReport
         }
         return rolled;
     }
-    public ResultRollMana(Unit Owner)
+    public ResultRollMana(Unit Owner, string OwnerName)
     {
         this.owner = Owner;
-        this.ownerName = Owner.Name;
+        this.ownerName = OwnerName;
     }
 }

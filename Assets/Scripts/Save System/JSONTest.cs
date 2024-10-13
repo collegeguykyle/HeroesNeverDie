@@ -10,12 +10,20 @@ using Newtonsoft.Json.Serialization;
 
 public class JSONTest : MonoBehaviour
 {
+    
+    
     public void Start()
+    {
+        JsonSave(getBattleReport());
+        print("JSON save file created.");
+    }
+
+    public static BattleReport getBattleReport()
     {
         List<Unit> playerTeam = new List<Unit>();
         playerTeam.Add(createRandomUnit("Bob", Team.player));
         playerTeam.Add(createRandomUnit("Billy", Team.player));
-        while (playerTeam[0].StartingCol == playerTeam[1].StartingCol 
+        while (playerTeam[0].StartingCol == playerTeam[1].StartingCol
             && playerTeam[0].StartingRow == playerTeam[1].StartingRow)
         {
             playerTeam[1].StartingRow = UnityEngine.Random.Range(1, 3);
@@ -31,13 +39,11 @@ public class JSONTest : MonoBehaviour
             enemyTeam[1].StartingRow = UnityEngine.Random.Range(1, 3);
             enemyTeam[1].StartingCol = UnityEngine.Random.Range(1, 5);
         }
-
         Battle calc = new Battle(playerTeam, enemyTeam);
-        JsonSave(calc.BattleReport);
-        print("Done");
+        return calc.BattleReport;
     }
 
-    private Unit createRandomUnit(String Name, Team team)
+    private static Unit createRandomUnit(String Name, Team team)
     {
         Unit unit = new Unit();
         unit.Name = Name;
@@ -93,7 +99,7 @@ public class JSONTest : MonoBehaviour
 
     public static BattleReport LoadJsonReplay(string fileName)
     {
-        string filePath = "D:\\Unity Testing\\" + fileName;
+        string filePath = "C:\\Users\\Colle\\Desktop\\" + fileName;
         string content;
         using (StreamReader sr = new StreamReader(filePath))
         {
@@ -103,6 +109,7 @@ public class JSONTest : MonoBehaviour
         BattleReport report = JsonConvert.DeserializeObject<BattleReport>(content, JSONSettings());
         return report;
     }
+
 
 }
 

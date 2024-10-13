@@ -386,7 +386,7 @@ public class BattleSpace : IComparable<BattleSpace>
 }
 public class TargetData
 {
-    [JsonIgnore] public IOccupyBattleSpace target;
+    public IOccupyBattleSpace target;
     public string targetName;
     public Team targetTeam;
     public int targetHP;
@@ -398,7 +398,7 @@ public class TargetData
     public TargetData(IOccupyBattleSpace target, BattleSpace targetSpace, int rangeTo, int pathDist)
     {
         this.target = target;
-        this.targetName = target.Name;
+        this.targetName = this.target.Name;
         this.targetTeam = target.Team;
         if (target is Unit) this.targetHP = (target as Unit).CurrentHP;
         BattleSpace = targetSpace;

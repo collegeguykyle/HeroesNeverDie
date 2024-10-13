@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 
 public class Melee1 : Ability, IHit, IDealDamage
@@ -31,18 +30,22 @@ public class Melee1 : Ability, IHit, IDealDamage
 
     public override void ExecuteAbility(ResultTargetting TargettingData)
     {
-        Debug.Log("Using Basic Test Melee");
         //This ability only does one attack
         ActionST resultAttack = new ActionST(this, TargettingData.SelectedTarget);
         ResultHit resultHit = ResultHit.TryHit(this, TargettingData.SelectedTarget as Unit);
         resultAttack.actionResults.Add(resultHit);
-        if (resultHit.success)
-        {
-            ResultDamage damageResult = new ResultDamage(resultHit, this);
-            resultAttack.actionResults.Add(damageResult);
-        }
+        
+        ResultDamage damageResult = new ResultDamage(resultHit, this);
+        if (resultHit.success) resultAttack.actionResults.Add(damageResult);
+        
         OwningUnit.Battle.AddToActionStack(resultAttack);
+
+        //Generate BattleLog Entry for the ability.
+        if (resultHit.success) resultAttack.BattleLogEntry = 
+                logHelpers.HitForDamage(resultAttack.targetName, resultHit, damageResult);
+        else resultAttack.BattleLogEntry = logHelpers.HitMiss(resultAttack.targetName, resultHit);
     }
+
 
     public int GetAttackBonus()
     {
@@ -86,12 +89,16 @@ public class Melee2 : Ability, IHit, IDealDamage
         ActionST resultAttack = new ActionST(this, TargettingData.SelectedTarget);
         ResultHit resultHit = ResultHit.TryHit(this, TargettingData.SelectedTarget as Unit);
         resultAttack.actionResults.Add(resultHit);
-        if (resultHit.success)
-        {
-            ResultDamage damageResult = new ResultDamage(resultHit, this);
-            resultAttack.actionResults.Add(damageResult);
-        }
+
+        ResultDamage damageResult = new ResultDamage(resultHit, this);
+        if (resultHit.success) resultAttack.actionResults.Add(damageResult);
+
         OwningUnit.Battle.AddToActionStack(resultAttack);
+
+        //Generate BattleLog Entry for the ability.
+        if (resultHit.success) resultAttack.BattleLogEntry =
+                logHelpers.HitForDamage(resultAttack.targetName, resultHit, damageResult);
+        else resultAttack.BattleLogEntry = logHelpers.HitMiss(resultAttack.targetName, resultHit);
     }
 
     public int GetAttackBonus()
@@ -120,7 +127,6 @@ public class MoveBasic : Ability, IMoveSelf
 
     public override void ExecuteAbility(ResultTargetting TargettingData)
     {
-        Debug.Log("Using Basic Move");
         ResultMovement result = ResultMovement.MoveUnitTowards(OwningUnit, TargettingData.getTargetData().BattleSpace, MoveType.Walk);
         OwningUnit.Battle.AddToActionStack(result, this, TargettingData.SelectedTarget);
     }
@@ -145,3 +151,4 @@ public class ApplyPoison : Ability, IApplyStatus
         
     }
 }
+

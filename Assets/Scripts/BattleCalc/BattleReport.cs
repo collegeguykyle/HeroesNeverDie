@@ -63,10 +63,10 @@ public class ReportStartTurn : ToReport
 {
     [JsonIgnore] public Unit unit;
     public string unitName;
-    public ReportStartTurn(Unit unit)
+    public ReportStartTurn(Unit unit, string unitName)
     {
         this.unit = unit;
-        unitName = unit.Name;
+        this.unitName = unitName;
     }
 }
 

@@ -10,6 +10,11 @@ public class DieSide : EventArgs
     public string Name { get; protected set; } = "Blank";
     public Mana Mana { get; protected set; } = new Mana(); //Amount of mana you get if the side is rolled
 
+    public DieSide()
+    {
+
+    }
+
     public static void SetDiceSide(Dice dice, int side, DieSide type)
     {
         DieSide clone = new DieSide(type);

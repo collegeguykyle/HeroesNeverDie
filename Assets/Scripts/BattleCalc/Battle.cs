@@ -69,7 +69,7 @@ public class Battle
 
     private void TakeUnitTurn()
     {
-        BattleReport.AddReport(new ReportStartTurn(CurrentUnit));
+        BattleReport.AddReport(new ReportStartTurn(CurrentUnit, CurrentUnit.Name));
         Reactions.SendStartUnitTurn(CurrentUnit);
 
         CurrentUnit.CurrentMove = CurrentUnit.MaxMove;

@@ -2,19 +2,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
+
 public class BattleLogWithDynamicTooltips : MonoBehaviour
 {
     public TextMeshProUGUI battleLogText;  // Reference to your battle log TextMeshProUGUI
     public TooltipController tooltipController;
+    
     public RectTransform canvasRect;       // Reference to the canvas RectTransform
     public RectTransform scrollRectTransform; // Reference to the ScrollRect's RectTransform for visible area checking
     public RectTransform contentTransform;    // Reference to the content RectTransform that holds the battle log text
+    
     public bool MoveToMouse = false;
-    // Dictionary to store tooltip data, keyed by unique IDs (for flexibility with different types)
-    private Dictionary<string, string> dynamicTooltips = new Dictionary<string, string>();
+    
+    private Dictionary<string, string> dynamicTooltips = new Dictionary<string, string>(); // Dictionary to store tooltip data, keyed by unique IDs (for flexibility with different types)
 
-    // The battle log text history
-    private string logHistory = "";
+    private List<BattleLogEntry> logEntries = new List<BattleLogEntry>();
 
     private string currentHoveredKeyword = null;
 
@@ -26,22 +28,9 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
 
     private void AddTestText()
     {
-        LogWithTooltip(new KW_Hit(100, "Stun", false), "Someone hit with a stun ability.");
-        LogWithTooltip(new KW_Hit(20, "none", true), "Hit,");
-        LogWithTooltip(new KW_Hit(73, "Blah blah blah hit", false), "another hit.");
-
-        AddTextToBattleLog("Changes to Integrate TooltipManager:\r\n\r\n    " +
-            "Reference to TooltipManager:\r\n        Added a reference to TooltipManager in the " +
-            "BattleLogWithDynamicTooltips class to handle displaying tooltips and adjusting their size " +
-            "dynamically.\r\n\r\n    ShowTooltip() Method:\r\n        Instead of directly manipulating " +
-            "the tooltip in the battle log class, we now call tooltipManager.ShowTooltip(tooltipContent) " +
-            "to display the tooltip. The TooltipManager automatically adjusts the size of the tooltip box " +
-            "based on the content.\r\n\r\n    HideTooltip():\r\n        The HideTooltip() method of " +
-            "TooltipManager is called to hide the tooltip when the mouse is not hovering over any link.\r\n\r\n    " +
-            "Tooltip Positioning:\r\n        The tooltip box position is still updated to follow the mouse " +
-            "using localPosition, but the actual display of the tooltip is now handled by TooltipManager." +
-            "\r\n\r\nExample TooltipManager Class:\r\n\r\nHere’s the TooltipManager class, as we discussed " +
-            "earlier, for handling the tooltip display and dynamic sizing:");
+        BattleReport report = JSONTest.getBattleReport();
+        logEntries = LogGenerator.GetLog(report);
+        foreach(BattleLogEntry entry in logEntries) LogWithTooltip(entry);
     }
 
     private void Update()
@@ -84,19 +73,38 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
     // Helper method to add plain text to the battle log
     public void AddTextToBattleLog(string message)
     {
-        battleLogText.text += message + "\n";
+        BattleLogEntry entry = new BattleLogEntry(message + "\n");
+        logEntries.Add(entry);
     }
 
-    public void LogWithTooltip(IToolTipKeyWord tooltipData, string message)
+
+    public void LogWithTooltip(IToolTipKeyWord tooltipData, string logMessage)
     {
-        // Generate a unique ID for this tooltip
-        string uniqueID = $"tooltip_{dynamicTooltips.Count}";
-        dynamicTooltips[uniqueID] = tooltipData.GetTooltipText();
+        BattleLogEntry entry = new BattleLogEntry(logMessage);
+        entry.AddKeywordTooltip(logMessage, tooltipData);
+        logEntries.Add(entry);
+        ProcessLogEntry(entry);
+    }
+    public void LogWithTooltip(BattleLogEntry entry)
+    {
+        logEntries.Add(entry);
+        ProcessLogEntry(entry);
+    }
 
-        // Append the message to the battle log, replacing dynamic text with a <link>
-        string logEntry = $"<link={uniqueID}><color=yellow>{message}</color></link>";
 
-        battleLogText.text += logEntry + "\n";
+    private void ProcessLogEntry(BattleLogEntry entry)
+    {
+        foreach (var keywordTooltip in entry.keywordTooltips)
+        {
+            string uniqueID = $"tooltip_{dynamicTooltips.Count}";
+            dynamicTooltips[uniqueID] = keywordTooltip.tooltip.GetTooltipText();
+
+            // Replace the keyword with a clickable link
+            entry.message = entry.message.Replace(keywordTooltip.keyword, $"<link={uniqueID}><color=yellow>{keywordTooltip.keyword}</color></link>");
+        }
+
+        // Render the updated battle log
+        RenderBattleLog();
     }
 
     private void ShowTooltip(string linkID)
@@ -149,6 +157,26 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
 
         // Check if the link's midpoint is between the top and bottom of the ScrollRect's viewport
         return (localPosition.y <= viewportTop && localPosition.y >= viewportBottom);
+    }
+
+    private void RenderBattleLog()
+    {
+        battleLogText.text = "";
+        foreach (var entry in logEntries)
+        {
+            battleLogText.text += entry.message + "\n";
+        }
+    }
+
+    private void RenderBattleLog(int through)
+    {
+        battleLogText.text = "";
+        int count = 0;
+        foreach (var entry in logEntries)
+        {
+            count++;
+            if (count <= through) battleLogText.text += entry.message + "\n";
+        }
     }
 }
 

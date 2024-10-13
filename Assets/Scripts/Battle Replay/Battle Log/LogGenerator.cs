@@ -2,124 +2,147 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LogGenerator
+public static class LogGenerator
 {
-
-    public int totalSteps { get; private set; } = 0;
-    public List<string> logEntries { get; private set; } = new List<string>();
-
-    public LogGenerator(BattleReport battleReport)
+    private static List<BattleLogEntry> logEntries = new List<BattleLogEntry>();
+    public static List<BattleLogEntry> GetLog(BattleReport battleReport)
     {
+        
         foreach (ToReport report in battleReport.Reports)
         {
             ReadReport(report);
         }
+        return logEntries;
     }
 
-    private void ReadReport(ToReport report)
+    private static void ReadReport(ToReport report)
     {
         if (report is ReportMessage) ReadMessage(report as ReportMessage);
         if (report is ReportStartTurn) ReadStartTurn(report as ReportStartTurn);
+        if (report is ResultRollMana) ReadResultMana(report as ResultRollMana);
         if (report is ReportEndTurn) ReadEndTurn(report as ReportEndTurn);
-        if (report is ReportTargettingData) ReadTargetting(report as ReportTargettingData);
         if (report is ReportStartRound) ReadStartRound(report as ReportStartRound);
         if (report is ReportUnitDeath) ReadUnitDeath(report as ReportUnitDeath);
         if (report is ReportEndBattle) ReadEndBattle(report as ReportEndBattle);
-        if (report is Action) Debug.Log("Action in the battle Report insteald of nested in an ability");
-        if (report is ResultAbility) ReadResultAbility(report as ResultAbility);
-        if (report is ResultTargetting) ReadResultTargetting(report as ResultTargetting);
-        if (report is ResultRollMana) ReadResultMana(report as ResultRollMana);
+        if (report is Action) Debug.Log("Action in the battle Report instead of nested in an ability");
+        if (report is ResultAbility) ReadResultAbility(report as ResultAbility);        
     }
 
-    private void ReadMessage(ReportMessage report)
+    private static void ReadMessage(ReportMessage report)
     {
-        logEntries.Add("<color=#7a97b2>" + report.message + "</color> \n");
+        logEntries.Add(new BattleLogEntry("<color=#7a97b2>" + report.message + "</color> \n"));
     }
 
-    private void ReadStartTurn(ReportStartTurn report)
+    private static void ReadStartTurn(ReportStartTurn report)
     {
-        logEntries.Add("<color=#ffb90f>Starting " + report.unitName + "'s Turn. </color>\n");
+        logEntries.Add(new BattleLogEntry("<color=#ffb90f>Starting " + report.unitName + "'s Turn. </color>\n"));
     }
 
-    private void ReadEndTurn(ReportEndTurn report)
+    private static void ReadResultMana(ResultRollMana result)
+    {
+        Mana mana = result.TotalMana(); //TODO: May want to update this with tooltips to show the dice sides in tooltips
+        string text = $"{result.ownerName} rolled mana: ";
+        foreach(ManaType type in mana.count.Keys)
+        {
+            text += $"{type} x{mana.GetCountType(type)}, ";
+        }
+        text += "\n";
+        logEntries.Add(new BattleLogEntry(text));
+    }
+
+    private static void ReadEndTurn(ReportEndTurn report)
     {
         //No end of turn battle log entry required.
         //logEntries.Add("<color=#ffb90f>Ending " + report.unitName + "'s Turn. </color>\n");
     }
 
-    private void ReadStartRound(ReportStartRound report)
+    private static void ReadStartRound(ReportStartRound report)
     {
-        logEntries.Add("<color=#ffb90f>Starting Round: " + report.round + "</color>\n");
+        logEntries.Add(new BattleLogEntry("<color=#ffb90f>Starting Round: " + report.round + "</color>\n"));
     }
 
-    private void ReadUnitDeath(ReportUnitDeath report)
+    private static void ReadUnitDeath(ReportUnitDeath report)
     {
-        logEntries.Add("<color=#cd000>     " + report.unitKilled + " has been slain! </color>\n");
+        logEntries.Add(new BattleLogEntry("<color=#cd000>     " + report.unitKilled + " has been slain! </color>\n"));
     }
 
-    private void ReadEndBattle(ReportEndBattle report)
+    private static void ReadEndBattle(ReportEndBattle report)
     {
-        logEntries.Add("<color=#cd000>" + report.Victors + " TEAM WINS!!! </color>\n");
+        logEntries.Add(new BattleLogEntry("<color=#cd000>" + report.Victors + " TEAM WINS!!! </color>\n"));
     }
 
-    private void ReadAction(ActionST action)
+    private static void ReadResultAbility(ResultAbility result)
     {
-        foreach(ActionResult result in action.actionResults)
-        {
-            if (result is ResultHit)
-            {
-
-            }
-            if (result is ResultSave)
-            {
-
-            }
-            if (result is ResultStatus)
-            {
-
-            }
-            if (result is ResultDamage)
-            {
-
-            }
-        }
-    }
-
-    private void ReadResultAbility(ResultAbility result)
-    {
-        if (result.Ability is MoveBasic) return; //Don't spam the log with basic movements
-
         //TODO: each ability has a tooltip popup that gives info on the ability including damage dice, effects, upgrades, etc
 
-        logEntries.Add($"{result.CasterName} used {result.Ability.Name}. \n");
+        logEntries.Add(new BattleLogEntry($"{result.CasterName} used {result.Ability.Name}. \n"));
         foreach(Action action in result.ActionList)
         {
-            if (action is ActionST) ReadAction(action as ActionST);
-            if (action is ActionAOE)
-            {
-                foreach(ActionST ST in (action as ActionAOE).Targets)
-                {
-                    ReadAction(ST);
-                }
-            }
-
+            string text = "    " + action.BattleLogEntry.message;
+            action.BattleLogEntry.message = text;
+            if(action.BattleLogEntry.showInLog) logEntries.Add(action.BattleLogEntry);
         }
     }
+}
 
-    private void ReadTargetting(ReportTargettingData report)
+public class BattleLogEntry
+{
+    public bool showInLog = true;
+    public string message;  // The raw log message
+    public List<KeywordTooltip> keywordTooltips = new List<KeywordTooltip>();
+    public BattleLogEntry(string message)
     {
-
+        this.message = message;
     }
 
-    private void ReadResultTargetting(ResultTargetting result)
+    // Method to add a keyword and associated tooltip
+    public void AddKeywordTooltip(string keyword, IToolTipKeyWord tooltip)
     {
+        keywordTooltips.Add(new KeywordTooltip(keyword, tooltip));
+    }
+}
 
+public class KeywordTooltip
+{
+    public string keyword;  // The keyword to be replaced with a link
+    public Color keywordColor;
+    public IToolTipKeyWord tooltip;  // The associated tooltip object
+
+    public KeywordTooltip(string keyword, IToolTipKeyWord tooltip)
+    {
+        this.keyword = keyword;
+        this.tooltip = tooltip;
+    }
+}
+
+public static class logHelpers
+{
+
+    public static BattleLogEntry HitForDamage(string targetName, ResultHit resultHit, ResultDamage damageResult)
+    {
+        BattleLogEntry entry = new BattleLogEntry("");
+        if (resultHit.success)
+        {
+            entry.message = $"{targetName} was hit for {damageResult.TotalDamage} damage. \n";
+            entry.AddKeywordTooltip("hit", new HitRollTooltip(resultHit));
+            entry.AddKeywordTooltip($"{damageResult.TotalDamage} damage", new DamageRollTooltip(damageResult));
+        }
+        else
+        {
+            entry.message = $"{targetName} {resultHit.defenseType}ed an attack. \n";
+            entry.AddKeywordTooltip($"{resultHit.defenseType}ed", new HitRollTooltip(resultHit));
+        }
+        return entry;
     }
 
-    private void ReadResultMana(ResultRollMana result)
+    public static BattleLogEntry HitMiss(string targetName, ResultHit resultHit)
     {
-
-
+        BattleLogEntry entry = new BattleLogEntry("");
+        {
+            entry.message = $"{targetName} {resultHit.defenseType}ed an attack. \n";
+            entry.AddKeywordTooltip($"{resultHit.defenseType}ed", new HitRollTooltip(resultHit));
+        }
+        return entry;
     }
 
 }

@@ -59,7 +59,7 @@ public class Unit : EventArgs, IOccupyBattleSpace
 
     public ResultRollMana RollManaDice()
     {
-        ResultRollMana result = new ResultRollMana(this);
+        ResultRollMana result = new ResultRollMana(this, this.Name);
         //for each dice in the dice list, roll it and add its mana to the mana pool
         foreach(Dice dice in DiceList)
         {

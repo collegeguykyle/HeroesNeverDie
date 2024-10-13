@@ -92,8 +92,8 @@ public class Damage
 
 public class DamageModifier
 {
-    int Amount;
-    string Source;
+    public int Amount;
+    public string Source;
     public DamageModifier(int amount, string source)
     {
         Amount = amount;

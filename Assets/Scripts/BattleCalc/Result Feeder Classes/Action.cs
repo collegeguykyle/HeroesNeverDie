@@ -7,7 +7,7 @@ public abstract class Action : ToReport
 {
     //This class groups ActionST, ActionAOE, and Reactions as options for sending into the reaction manager
     //and for ResultAbility to log
-
+    public BattleLogEntry BattleLogEntry = new BattleLogEntry("");
 }
 
 public abstract class ActionResult

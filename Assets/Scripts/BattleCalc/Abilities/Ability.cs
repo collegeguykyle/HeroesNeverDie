@@ -15,8 +15,6 @@ public abstract class Ability
     [JsonIgnore] public Unit OwningUnit { get; protected set; }
     public string OwningUnitName;
 
-    //TODO: How send Attack Result and Ability Complete result??
-
     public Ability(Unit OwningUnit)
     {
         this.OwningUnit = OwningUnit;

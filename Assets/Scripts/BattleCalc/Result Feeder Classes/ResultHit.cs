@@ -12,6 +12,7 @@ public class ResultHit : ActionResult
     public string TargetName;
 
     public int roll = 0;
+    public List<ToHitBonus> HitBonusList = new List<ToHitBonus>();
     public int attackBonus = 0;
 
     public DefenseType defenseType;
@@ -33,6 +34,7 @@ public class ResultHit : ActionResult
         ResultHit result = new ResultHit((ability as Ability), target);
 
         result.attackBonus = ability.GetAttackBonus();
+        result.HitBonusList = ability.ToHitBonus;
 
         //Choose which defense value is the best against the attack
         int dodge = target.GetDodge();

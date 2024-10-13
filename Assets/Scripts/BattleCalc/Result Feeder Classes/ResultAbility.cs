@@ -11,8 +11,6 @@ public class ResultAbility : ToReport
     public Ability Ability;
     public List<Action> ActionList = new List<Action>();
 
-
-
     #region constructors
     public ResultAbility(Unit Caster, Ability Ability)
     {
