@@ -29,8 +29,8 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
     private void AddTestText()
     {
         BattleReport report = JSONTest.getBattleReport();
-        logEntries = LogGenerator.GetLog(report);
-        foreach(BattleLogEntry entry in logEntries) LogWithTooltip(entry);
+        logEntries = LogGenerator.GetLog(report, false);
+        foreach(BattleLogEntry entry in logEntries) ProcessLogEntry(entry);
     }
 
     private void Update()
@@ -70,31 +70,15 @@ public class BattleLogWithDynamicTooltips : MonoBehaviour
         }
     }
 
-    // Helper method to add plain text to the battle log
-    public void AddTextToBattleLog(string message)
-    {
-        BattleLogEntry entry = new BattleLogEntry(message + "\n");
-        logEntries.Add(entry);
-    }
-
-
-    public void LogWithTooltip(IToolTipKeyWord tooltipData, string logMessage)
-    {
-        BattleLogEntry entry = new BattleLogEntry(logMessage);
-        entry.AddKeywordTooltip(logMessage, tooltipData);
-        logEntries.Add(entry);
-        ProcessLogEntry(entry);
-    }
     public void LogWithTooltip(BattleLogEntry entry)
     {
         logEntries.Add(entry);
         ProcessLogEntry(entry);
     }
 
-
     private void ProcessLogEntry(BattleLogEntry entry)
     {
-        foreach (var keywordTooltip in entry.keywordTooltips)
+        foreach (KeywordTooltip keywordTooltip in entry.keywordTooltips)
         {
             string uniqueID = $"tooltip_{dynamicTooltips.Count}";
             dynamicTooltips[uniqueID] = keywordTooltip.tooltip.GetTooltipText();

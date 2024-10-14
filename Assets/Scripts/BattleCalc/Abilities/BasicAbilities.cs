@@ -37,7 +37,7 @@ public class Melee1 : Ability, IHit, IDealDamage
         
         ResultDamage damageResult = new ResultDamage(resultHit, this);
         if (resultHit.success) resultAttack.actionResults.Add(damageResult);
-        
+
         OwningUnit.Battle.AddToActionStack(resultAttack);
 
         //Generate BattleLog Entry for the ability.

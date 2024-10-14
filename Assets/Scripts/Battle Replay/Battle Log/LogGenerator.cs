@@ -5,19 +5,19 @@ using UnityEngine;
 public static class LogGenerator
 {
     private static List<BattleLogEntry> logEntries = new List<BattleLogEntry>();
-    public static List<BattleLogEntry> GetLog(BattleReport battleReport)
+    public static List<BattleLogEntry> GetLog(BattleReport battleReport, bool debugMessages)
     {
         
         foreach (ToReport report in battleReport.Reports)
         {
-            ReadReport(report);
+            ReadReport(report, debugMessages);
         }
         return logEntries;
     }
 
-    private static void ReadReport(ToReport report)
+    private static void ReadReport(ToReport report, bool debugMessages)
     {
-        if (report is ReportMessage) ReadMessage(report as ReportMessage);
+        if (report is ReportMessage && debugMessages) ReadMessage(report as ReportMessage);
         if (report is ReportStartTurn) ReadStartTurn(report as ReportStartTurn);
         if (report is ResultRollMana) ReadResultMana(report as ResultRollMana);
         if (report is ReportEndTurn) ReadEndTurn(report as ReportEndTurn);
@@ -30,12 +30,12 @@ public static class LogGenerator
 
     private static void ReadMessage(ReportMessage report)
     {
-        logEntries.Add(new BattleLogEntry("<color=#7a97b2>" + report.message + "</color> \n"));
+        logEntries.Add(new BattleLogEntry("<color=#7a97b2>" + report.message + "</color>"));
     }
 
     private static void ReadStartTurn(ReportStartTurn report)
     {
-        logEntries.Add(new BattleLogEntry("<color=#ffb90f>Starting " + report.unitName + "'s Turn. </color>\n"));
+        logEntries.Add(new BattleLogEntry("\n<color=#ffb90f>Starting " + report.unitName + "'s Turn. </color>"));
     }
 
     private static void ReadResultMana(ResultRollMana result)
@@ -46,7 +46,7 @@ public static class LogGenerator
         {
             text += $"{type} x{mana.GetCountType(type)}, ";
         }
-        text += "\n";
+        text += "";
         logEntries.Add(new BattleLogEntry(text));
     }
 
@@ -58,24 +58,25 @@ public static class LogGenerator
 
     private static void ReadStartRound(ReportStartRound report)
     {
-        logEntries.Add(new BattleLogEntry("<color=#ffb90f>Starting Round: " + report.round + "</color>\n"));
+        logEntries.Add(new BattleLogEntry("<color=#ffb90f>Starting Round: " + report.round + "</color>"));
     }
 
     private static void ReadUnitDeath(ReportUnitDeath report)
     {
-        logEntries.Add(new BattleLogEntry("<color=#cd000>     " + report.unitKilled + " has been slain! </color>\n"));
+        logEntries.Add(new BattleLogEntry("<color=#cd000>     " + report.unitKilled + " has been slain! </color>"));
     }
 
     private static void ReadEndBattle(ReportEndBattle report)
     {
-        logEntries.Add(new BattleLogEntry("<color=#cd000>" + report.Victors + " TEAM WINS!!! </color>\n"));
+        logEntries.Add(new BattleLogEntry("<color=#cd000>" + report.Victors + " TEAM WINS!!! </color>"));
     }
 
     private static void ReadResultAbility(ResultAbility result)
     {
         //TODO: each ability has a tooltip popup that gives info on the ability including damage dice, effects, upgrades, etc
+        if (result.Ability is MoveBasic) return; //dont spam the log with basic movements
 
-        logEntries.Add(new BattleLogEntry($"{result.CasterName} used {result.Ability.Name}. \n"));
+        logEntries.Add(new BattleLogEntry($"{result.CasterName} used {result.Ability.Name}."));
         foreach(Action action in result.ActionList)
         {
             string text = "    " + action.BattleLogEntry.message;
@@ -123,13 +124,13 @@ public static class logHelpers
         BattleLogEntry entry = new BattleLogEntry("");
         if (resultHit.success)
         {
-            entry.message = $"{targetName} was hit for {damageResult.TotalDamage} damage. \n";
+            entry.message = $"{targetName} was hit for {damageResult.TotalDamage} damage.";
             entry.AddKeywordTooltip("hit", new HitRollTooltip(resultHit));
             entry.AddKeywordTooltip($"{damageResult.TotalDamage} damage", new DamageRollTooltip(damageResult));
         }
         else
         {
-            entry.message = $"{targetName} {resultHit.defenseType}ed an attack. \n";
+            entry.message = $"{targetName} {resultHit.defenseType}ed an attack.";
             entry.AddKeywordTooltip($"{resultHit.defenseType}ed", new HitRollTooltip(resultHit));
         }
         return entry;
@@ -139,7 +140,7 @@ public static class logHelpers
     {
         BattleLogEntry entry = new BattleLogEntry("");
         {
-            entry.message = $"{targetName} {resultHit.defenseType}ed an attack. \n";
+            entry.message = $"{targetName} {resultHit.defenseType}ed an attack.";
             entry.AddKeywordTooltip($"{resultHit.defenseType}ed", new HitRollTooltip(resultHit));
         }
         return entry;
